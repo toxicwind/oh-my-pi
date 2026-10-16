@@ -276,7 +276,7 @@ Preparation filters out pure metadata (`model_change`, `thinking_level_change`, 
 
 ### Split-turn handling
 
-If cut point is not at a user-turn start, compaction treats it as a split turn.
+If cut point is not at an architect-turn start, compaction treats it as a split turn.
 
 Turn start detection treats these as user-turn boundaries:
 

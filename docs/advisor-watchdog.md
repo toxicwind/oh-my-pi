@@ -290,7 +290,7 @@ Candidates in hidden owner directories are ignored unless the file is inside an 
 `WATCHDOG.md` content is expanded with the same `@` import helper used by context files:
 
 - relative imports resolve from the importing file's directory
-- `~/` resolves from the user's home directory
+- `~/` resolves from the architect's home directory
 - imports inside fenced code blocks and inline code spans stay literal
 - recursive imports are expanded up to five hops; cycles and repeated paths are skipped without removing the literal token
 - missing or unreadable imports leave the original `@path` text in place
@@ -371,7 +371,7 @@ A continuation an advisor delivery itself starts — a steer while the primary i
 
 ### Discovery locations
 
-`WATCHDOG.yml`/`WATCHDOG.yaml` share the same user + project search path as `WATCHDOG.md`: the user-level `<active agent dir>/WATCHDOG.yml` plus every `WATCHDOG.yml`/`.omp/WATCHDOG.yml` encountered while walking from `cwd` up to the repository root (or the home directory when no repo root is found). All discovered files are loaded together; a more-specific file (project leaf > project ancestor > user) replaces an earlier entry with the same advisor slug.
+`WATCHDOG.yml`/`WATCHDOG.yaml` share the same user + project search path as `WATCHDOG.md`: the architect-level `<active agent dir>/WATCHDOG.yml` plus every `WATCHDOG.yml`/`.omp/WATCHDOG.yml` encountered while walking from `cwd` up to the repository root (or the home directory when no repo root is found). All discovered files are loaded together; a more-specific file (project leaf > project ancestor > user) replaces an earlier entry with the same advisor slug.
 
 At the same directory depth, `.yml` candidates precede `.yaml` candidates, and `.omp/<filename>` precedes the standalone `<filename>`. Later entries win slug collisions; top-level instructions still concatenate.
 

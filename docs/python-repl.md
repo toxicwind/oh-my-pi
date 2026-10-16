@@ -180,7 +180,7 @@ The pause/resume events are the sole mechanism that suspends the budget; `%pip` 
 On abort/timeout:
 
 - The host sends `kill("SIGINT")` to the runner subprocess.
-- The runner's exec-time signal handler raises `KeyboardInterrupt` inside the user code.
+- The runner's exec-time signal handler raises `KeyboardInterrupt` inside the architect code.
 - Result includes `cancelled=true`; a kernel timeout is annotated as `eval cell timed out after <n>s; kernel interrupted but remains running. Reset the kernel via { reset: true } if state appears corrupted.`
 - Between requests the runner installs `SIG_IGN` for SIGINT so a stray cancel does not tear down the kernel.
 
@@ -188,7 +188,7 @@ If the runner does not emit `done` within 5s of the interrupt (`INTERRUPT_ESCALA
 
 ### stdin behavior
 
-Interactive stdin is not supported: the runner's stdin is the host's NDJSON control channel, not a user-input stream. `input()` cannot be answered through Eval and may block until cancellation. Built-in pip and shell magics give their child processes `DEVNULL` stdin so they cannot consume control frames.
+Interactive stdin is not supported: the runner's stdin is the host's NDJSON control channel, not an architect-input stream. `input()` cannot be answered through Eval and may block until cancellation. Built-in pip and shell magics give their child processes `DEVNULL` stdin so they cannot consume control frames.
 
 ## Output capture and rendering
 

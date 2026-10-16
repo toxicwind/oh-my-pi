@@ -142,7 +142,7 @@ Installed-plugin manifest entries may be `.ts`, `.js`, `.mjs`, or `.cjs`; a mani
 pi.registerCommand("my-cmd", {
   description: "What the command does",
   handler: async (args, ctx) => {
-    // args: everything the user typed after /my-cmd
+    // args: everything the architect typed after /my-cmd
     // ctx: ExtensionCommandContext — includes ctx.ui, ctx.cwd, session controls
     ctx.ui.notify("Running!", "info");
     await ctx.waitForIdle();

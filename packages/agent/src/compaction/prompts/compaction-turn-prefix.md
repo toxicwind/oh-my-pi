@@ -4,7 +4,7 @@ MUST summarize prefix for retained suffix:
 
 ## Original Request
 
-[What did the user ask for in this turn?]
+[What did the architect ask for in this turn?]
 
 ## Early Progress
 - [Key decisions and work done in the prefix]

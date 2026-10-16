@@ -3,7 +3,7 @@
 {{/if}}
 
 {{#if multi}}
-Answer each question below about the state given in the user message. Reply with one line per question, formatted exactly as `<question id>: <answer>`, in the order asked. No explanation or other text.
+Answer each question below about the state given in the architect message. Reply with one line per question, formatted exactly as `<question id>: <answer>`, in the order asked. No explanation or other text.
 
 {{/if}}
 {{#each questions}}

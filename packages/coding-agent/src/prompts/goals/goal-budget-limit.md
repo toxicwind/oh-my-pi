@@ -10,6 +10,6 @@ Budget:
 - Tokens used: {{tokensUsed}}
 - Token budget: {{tokenBudget}}
 
-Runtime marked goal budget-limited. NEVER start new substantive work for this goal. Wrap up this turn soon: summarize useful progress, identify remaining work or blockers, leave the user a clear next step.
+Runtime marked goal budget-limited. NEVER start new substantive work for this goal. Wrap up this turn soon: summarize useful progress, identify remaining work or blockers, leave the architect a clear next step.
 
 Budget exhaustion ≠ completion. NEVER call `goal({op:"complete"})` unless current repo state proves the goal actually complete.

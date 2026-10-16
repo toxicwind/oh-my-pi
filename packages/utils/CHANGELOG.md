@@ -463,7 +463,7 @@
 
 - Fixed PowerShell (`powershell.exe` / `pwsh`) support when used as a custom `shellPath` by correctly passing `-NoLogo -Command` (and `-NoProfile` under `PI_BASH_NO_LOGIN`) instead of POSIX flags.
 - Fixed the in-house `marked` list tokenizer consuming the trailing blank line into the list token when the next top-level line was a plain paragraph. The blank now always becomes a separate `space` token (matching real marked), so a list's token shape no longer depends on what follows it — restoring the TUI streaming lexer's freeze invariant — and a list followed by a paragraph is tight, not loose, per CommonMark.
-- Added the missing Handlebars built-in `lookup` helper to the in-house `template` engine (`{{lookup obj key}}`, proto-safe property access; a user-registered `lookup` helper still takes precedence).
+- Added the missing Handlebars built-in `lookup` helper to the in-house `template` engine (`{{lookup obj key}}`, proto-safe property access; an architect-registered `lookup` helper still takes precedence).
 
 ### Removed
 
@@ -516,7 +516,7 @@
 ### Added
 
 - Added a `postmortem.quit` configuration option to safely handle shutdown paths when the terminal output has already disconnected.
-- Added project-keyed OMP security-state directory helpers under the user state root.
+- Added project-keyed OMP security-state directory helpers under the architect state root.
 
 ## [17.1.8] - 2026-07-28
 

@@ -872,7 +872,7 @@ requires a request shape the server treats as off; for example,
 Tool / message normalization:
 
 - `requiresToolResultName` — tool-result messages need a `name` field (Mistral). Default: auto.
-- `requiresAssistantAfterToolResult` — a user message after a tool result needs an assistant turn in between. Default: auto.
+- `requiresAssistantAfterToolResult` — an architect message after a tool result needs an assistant turn in between. Default: auto.
 - `requiresThinkingAsText` — convert thinking blocks to text wrapped in `<thinking>` delimiters (Mistral). Default: auto.
 - `requiresMistralToolIds` — normalize tool-call ids to exactly 9 alphanumeric chars. Default: auto.
 - `supportsStrictMode` — accept the per-tool `strict` field on tool schemas. Default: conservative auto-detect per provider/baseUrl.

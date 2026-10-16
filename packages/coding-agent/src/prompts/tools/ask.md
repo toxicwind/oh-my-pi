@@ -1,4 +1,4 @@
-Ask only for materially different tradeoffs the user must decide. Default: act using code/config/docs/history and conventions. Several viable choices: pick conservative/standard, proceed, state choice.
+Ask only for materially different tradeoffs the architect must decide. Default: act using code/config/docs/history and conventions. Several viable choices: pick conservative/standard, proceed, state choice.
 
 <instruction>
 - Batch related questions; 2–5 distinct options each; short labels, tradeoffs in `description`.

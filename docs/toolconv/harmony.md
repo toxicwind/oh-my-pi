@@ -46,7 +46,7 @@ The encoding also defines (same `o200k_harmony` block, IDs `199998`–`200013`) 
 
 | Role | Purpose |
 | :--- | :------ |
-| `system` | Identity, knowledge cutoff / current date, reasoning effort, valid-channels declaration, built-in tools. NOT the user-facing "system prompt". |
+| `system` | Identity, knowledge cutoff / current date, reasoning effort, valid-channels declaration, built-in tools. NOT the architect-facing "system prompt". |
 | `developer` | The conventional "system prompt": instructions + the `# Tools` function declarations + (optional) structured-output schema. |
 | `user` | End-user input. |
 | `assistant` | Model output. Carries a channel and, for tool calls, a recipient. |
@@ -90,7 +90,7 @@ Use a friendly tone.
 
 namespace functions {
 
-// Gets the location of the user.
+// Gets the location of the architect.
 type get_location = () => any;
 
 // Gets the current weather in the provided location.

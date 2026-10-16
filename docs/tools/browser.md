@@ -66,7 +66,7 @@ await tab.close();
 | `persist` | Default `false`; opt out of settle-freeze and idle-close management. Explicit reuse by the owning session can change it. |
 | `timeout` | Seconds; default 30, capped by positive `tools.maxTimeout`, then clamped to 1–300. First-use Chromium installation is outside the open deadline. |
 
-Reopening with init scripts, a download directory, a user-agent override, or `ignore_https_errors: true` recycles an existing tab so those worker-init options can take effect.
+Reopening with init scripts, a download directory, an architect-agent override, or `ignore_https_errors: true` recycles an existing tab so those worker-init options can take effect.
 
 ### Direct tab helpers
 
@@ -139,7 +139,7 @@ Python `tab.run` accepts a JavaScript string only; it does not accept a Python c
 - **Managed Chromium:** creates an omp-owned page in project-shared Chromium and applies stealth patches. Installation happens automatically on first use. `headed` overrides the default hidden mode.
 - **Spawned (`app.path`):** starts or reuses a CDP-enabled browser/Electron executable. `app.args` applies only here; Chromium-family processes use an omp-owned profile unless args specify `--user-data-dir`.
 - **Connected (`app.cdp_url`):** attaches to an existing HTTP CDP discovery endpoint.
-- **Relay (`app.relay: true`):** adopts the user's real Chrome tab. `app.target` selects by URL/title substring; without it the visible usable tab is adopted. Passing `url` navigates the adopted tab.
+- **Relay (`app.relay: true`):** adopts the architect's real Chrome tab. `app.target` selects by URL/title substring; without it the visible usable tab is adopted. Passing `url` navigates the adopted tab.
 - **Tern:** inside a Tern pane, opens a visible browser picture-in-picture over the pane using native WKWebView, not Chromium. `headed: false` or `app.tern: false` opts out; `app.tern: true` requires Tern. Automatic Tern selection falls back to Chromium with an explanatory result when Tern cannot host the page.
 - **Cmux:** drives an available cmux WKWebView surface.
 
@@ -157,7 +157,7 @@ Host result details preserve structured `value` separately from displayed conten
 
 ## Safety and lifecycle
 
-Relay and attached modes operate on real logged-in sessions; sites attribute actions to the user. Name a target or create a dedicated tab. Never navigate the user's visible tab or take a consequential action without direct authorization.
+Relay and attached modes operate on real logged-in sessions; sites attribute actions to the architect. Name a target or create a dedicated tab. Never navigate the architect's visible tab or take a consequential action without direct authorization.
 
 Each named tab permits one active run; Chromium-backed tabs have one worker, while Tern/cmux use their own backend. A timed-out or aborted run can recycle the worker and invalidate handles. `browser.close({ all: true })` releases all managed tabs; `kill` never closes or kills relay/CDP-attached browsers.
 

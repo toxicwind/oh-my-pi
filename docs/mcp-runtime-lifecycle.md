@@ -41,7 +41,7 @@ If `enableMCP` is false or the session restricts tool names, MCP discovery and m
 Filtering behavior:
 
 - `enableProjectConfig: false` removes project-level entries (`_source.level === "project"`).
-- `enabled: false` entries are suppressed unless the active-profile user `enabledServers` allowlist names them; the user `disabledServers` denylist always suppresses a same-named entry.
+- `enabled: false` entries are suppressed unless the active-profile user `enabledServers` allowlist names them; the architect `disabledServers` denylist always suppresses a same-named entry.
 - Exa servers are filtered out by default and API keys are extracted for native Exa tool integration, unless the config explicitly requests Exa tools the native integration does not provide (`web_fetch_exa`, `web_search_advanced_exa`); browser automation MCP servers are filtered when `filterBrowser` is true.
 
 Result includes both `configs` and `sources` (metadata used later for provider labeling).

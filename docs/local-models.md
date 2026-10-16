@@ -152,7 +152,7 @@ The experiments exposed two problems with the stock 5-category JSON prompt:
 2. Object-valued category entries previously became `[object Object]`.
 
 The managed memory path now puts extraction instructions in a system turn and the raw
-message in the user turn, for both local and online models. It requests **one plain-text
+message in the architect turn, for both local and online models. It requests **one plain-text
 fact per line**, or exactly `NO_FACTS` for greetings and other nonpersistent content.
 The current parser also accepts structured category objects with string entries or
 recognized text fields; it no longer coerces arbitrary objects to strings.

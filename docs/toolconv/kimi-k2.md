@@ -21,7 +21,7 @@ The five tool-call markers required for manual parsing, plus the ChatML envelope
 | `<\|tool_call_end\|>` | 163599 | Closes one individual tool call |
 | `<\|tool_calls_section_end\|>` | 163596 | Closes the tool-call section |
 | `<\|im_system\|>` | 163594 | Start marker for system-class turns (`system`, `tool`, `tool_declare`) |
-| `<\|im_user\|>` | 163587 | Start marker for a user turn |
+| `<\|im_user\|>` | 163587 | Start marker for an architect turn |
 | `<\|im_assistant\|>` | 163588 | Start marker for an assistant turn |
 | `<\|im_middle\|>` | 163601 | Separates the role/name header from the message body |
 | `<\|im_end\|>` | 163586 | Ends any turn |
@@ -62,7 +62,7 @@ Available tools are advertised in a single dedicated turn placed at the very top
 `{TOOLS_JSON}` is the standard OpenAI-style `tools` array serialized to JSON with **compact separators** `(',', ':')` (no spaces). The array elements are passed through verbatim, i.e. each is `{"type":"function","function":{"name":…,"description":…,"parameters":{…}}}` with a JSON-Schema `parameters` object. Example (single tool, exactly as emitted):
 
 ```text
-<|im_system|>tool_declare<|im_middle|>[{"type":"function","function":{"name":"get_weather","description":"Get weather information. Call this tool when the user needs to get weather information","parameters":{"type":"object","required":["city"],"properties":{"city":{"type":"string","description":"City name"}}}}}]<|im_end|>
+<|im_system|>tool_declare<|im_middle|>[{"type":"function","function":{"name":"get_weather","description":"Get weather information. Call this tool when the architect needs to get weather information","parameters":{"type":"object","required":["city"],"properties":{"city":{"type":"string","description":"City name"}}}}}]<|im_end|>
 ```
 
 The `tool_declare` turn is rendered only when `tools` is non-empty.
@@ -119,7 +119,7 @@ A complete multi-turn weather exchange. These are the exact rendered streams (sy
 **Stage 1 — prompt fed to the model** (`tools` set, `add_generation_prompt=True`):
 
 ```text
-<|im_system|>tool_declare<|im_middle|>[{"type":"function","function":{"name":"get_weather","description":"Get weather information. Call this tool when the user needs to get weather information","parameters":{"type":"object","required":["city"],"properties":{"city":{"type":"string","description":"City name"}}}}}]<|im_end|><|im_system|>system<|im_middle|>You are Kimi, an AI assistant created by Moonshot AI.<|im_end|><|im_user|>user<|im_middle|>What's the weather like in Beijing today? Use the tool to check.<|im_end|><|im_assistant|>assistant<|im_middle|>
+<|im_system|>tool_declare<|im_middle|>[{"type":"function","function":{"name":"get_weather","description":"Get weather information. Call this tool when the architect needs to get weather information","parameters":{"type":"object","required":["city"],"properties":{"city":{"type":"string","description":"City name"}}}}}]<|im_end|><|im_system|>system<|im_middle|>You are Kimi, an AI assistant created by Moonshot AI.<|im_end|><|im_user|>user<|im_middle|>What's the weather like in Beijing today? Use the tool to check.<|im_end|><|im_assistant|>assistant<|im_middle|>
 ```
 
 **Assistant generation** (model output; server reports `finish_reason: "tool_calls"`):
@@ -131,7 +131,7 @@ A complete multi-turn weather exchange. These are the exact rendered streams (sy
 **Stage 2 — prompt for the next turn**, after appending the assistant tool-call turn and the tool result turn (`add_generation_prompt=True`):
 
 ```text
-<|im_system|>tool_declare<|im_middle|>[{"type":"function","function":{"name":"get_weather","description":"Get weather information. Call this tool when the user needs to get weather information","parameters":{"type":"object","required":["city"],"properties":{"city":{"type":"string","description":"City name"}}}}}]<|im_end|><|im_system|>system<|im_middle|>You are Kimi, an AI assistant created by Moonshot AI.<|im_end|><|im_user|>user<|im_middle|>What's the weather like in Beijing today? Use the tool to check.<|im_end|><|im_assistant|>assistant<|im_middle|><|tool_calls_section_begin|><|tool_call_begin|>functions.get_weather:0<|tool_call_argument_begin|>{"city": "Beijing"}<|tool_call_end|><|tool_calls_section_end|><|im_end|><|im_system|>get_weather<|im_middle|>## Return of functions.get_weather:0
+<|im_system|>tool_declare<|im_middle|>[{"type":"function","function":{"name":"get_weather","description":"Get weather information. Call this tool when the architect needs to get weather information","parameters":{"type":"object","required":["city"],"properties":{"city":{"type":"string","description":"City name"}}}}}]<|im_end|><|im_system|>system<|im_middle|>You are Kimi, an AI assistant created by Moonshot AI.<|im_end|><|im_user|>user<|im_middle|>What's the weather like in Beijing today? Use the tool to check.<|im_end|><|im_assistant|>assistant<|im_middle|><|tool_calls_section_begin|><|tool_call_begin|>functions.get_weather:0<|tool_call_argument_begin|>{"city": "Beijing"}<|tool_call_end|><|tool_calls_section_end|><|im_end|><|im_system|>get_weather<|im_middle|>## Return of functions.get_weather:0
 {"weather": "Sunny"}<|im_end|><|im_assistant|>assistant<|im_middle|>
 ```
 

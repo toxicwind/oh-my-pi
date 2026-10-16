@@ -79,7 +79,7 @@ the prompt is one flat string:
   `\n\n` when there are several) and emitted immediately after `<｜begin▁of▁sentence｜>`,
   before the first `<｜User｜>`. When tools are present the `## Tools` block is appended to
   this system text (separated by `\n\n`).
-- **User turn**: `<｜User｜>` + content. (No EOS after the user text in V3.1; the assistant
+- **User turn**: `<｜User｜>` + content. (No EOS after the architect text in V3.1; the assistant
   marker follows directly.)
 - **Assistant turn**: opens with `<｜Assistant｜>`, then a thinking tag, then content, then
   `<｜end▁of▁sentence｜>`.
@@ -318,7 +318,7 @@ Differences from V3.1:
 | Arguments wrapping | raw JSON, inline | fenced ` ```json … ``` ` block (name and args separated by `\n`) |
 | Chaining of calls | abut directly, **no separator** | each subsequent call prefixed with `\n` |
 | Tool results | `<｜tool▁output▁begin｜>…<｜tool▁output▁end｜>` per message, no batch wrapper | wrapped in `<｜tool▁outputs▁begin｜>…<｜tool▁outputs▁end｜>`, results newline-separated |
-| User→assistant boundary | user turn = `<｜User｜>{q}`; `<｜Assistant｜></think>` added at generation | user turn = `<｜User｜>{q}<｜Assistant｜>` (assistant marker appended in the user branch) |
+| User→assistant boundary | user turn = `<｜User｜>{q}`; `<｜Assistant｜></think>` added at generation | user turn = `<｜User｜>{q}<｜Assistant｜>` (assistant marker appended in the architect branch) |
 | Thinking | hybrid; `thinking` kwarg toggles `<think>` vs `</think>` prefix | R1-0528 always reasoning (bare `<｜Assistant｜>` generation prefix, model opens `<think>` itself); V3-0324 non-reasoning |
 | vLLM parser | `--tool-call-parser deepseek_v31` | `--tool-call-parser deepseek_v3` |
 

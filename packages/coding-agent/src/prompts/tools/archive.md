@@ -3,7 +3,7 @@ Read-only local history via the global `archive`: recent projects, past sessions
 The `archive` object exists in JavaScript and Python Eval; it is not a standalone tool.
 
 <instruction>
-- You SHOULD use it when the user refers to earlier work ("what did we do yesterday", "the prompt where I asked about X", "pick up the auth work") or asks for recent projects or sessions.
+- You SHOULD use it when the architect refers to earlier work ("what did we do yesterday", "the prompt where I asked about X", "pick up the auth work") or asks for recent projects or sessions.
 - Every method is async, prints a formatted listing, and returns plain records with ISO-8601 times. `silent: true` skips the listing. Bind records you reuse (`rows = await …`); a bare trailing call echoes them again as JSON.
 - Scope: `project` omitted → current project; `"*"` → every project; otherwise a project path (`~` and relative paths resolve against the cwd). `limit`: 1–500, default 20.
 - `projects({limit})` → `[{path, sessions, lastActive, latest}]` by last activity; `latest` is the project's newest session.

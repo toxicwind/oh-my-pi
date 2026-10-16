@@ -151,7 +151,7 @@ The same file also exposes non-tool helpers used by `/todo`:
   - `Missing items for append operation`
   - `Task "..." already exists`
 - A `todo` call carries a single op; any error in it discards every mutation the op made.
-- Runtime-level tool failure is handled outside the tool body: `agent-session` injects a hidden reminder and the event controller warns the user that visible progress may be stale.
+- Runtime-level tool failure is handled outside the tool body: `agent-session` injects a hidden reminder and the event controller warns the architect that visible progress may be stale.
 - Idempotency is op-specific:
   - `init` is a full replacement; replaying the same payload yields the same state.
   - `start`, `done`, `drop`, `block`, and `unblock` are effectively idempotent on an existing target state, though `start` also demotes another active task and a repeated `block` can update its reason.

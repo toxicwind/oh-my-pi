@@ -127,7 +127,7 @@ Normalization:
 
 - `globs`: array-of-string or single string
 - `alwaysApply`, `description`, `condition`/legacy `ttsr_trigger`, `astCondition`, `question`, `scope`, `agents`, and `interruptMode` parsed by shared rule helpers
-- `name` is fixed to `global_rules` for the user global file and derived from filename for project rules
+- `name` is fixed to `global_rules` for the architect global file and derived from filename for project rules
 
 ### Cline provider (`cline.ts`)
 

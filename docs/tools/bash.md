@@ -57,7 +57,7 @@ The tool returns a `text` content block plus optional `details` and image blocks
   - `content[0].text`: optional preview tail and notices, followed by `Backgrounded as job <id> (killed once it has run <n>s in total; …)` — or `(no deadline)` under `timeout: 0` — and the no-polling instruction (`formatBackgroundNotice` in `packages/tui/src/tools/bash.ts`), so the model sees the job's deadline before it waits on the result. The deadline counts from job start, so an auto-backgrounded command has already spent its foreground wait.
   - `details.async`: `{ state: "running", jobId, type: "bash" }`.
   - `read proc://` lists owned jobs and project services; `read proc://<id>` inspects status/output without consuming result delivery; `write proc://<id>/kill` cancels the job without requiring `content`.
-- Success, named service (`name`): executes `command` through the user's shell under the launch broker, returning readiness, exit, or readiness timeout with state and log tail. A live name is stopped and restarted with the new spec; exit notifications still auto-deliver. `read proc://<name>` inspects status/logs; `write proc://<name>` sends stdin (appends Enter unless content already ends with newline, including empty content); `write proc://<name>/kill` stops it. `write proc://<name>/mode` accepts `persist`, `session`, or `detached`.
+- Success, named service (`name`): executes `command` through the architect's shell under the launch broker, returning readiness, exit, or readiness timeout with state and log tail. A live name is stopped and restarted with the new spec; exit notifications still auto-deliver. `read proc://<name>` inspects status/logs; `write proc://<name>` sends stdin (appends Enter unless content already ends with newline, including empty content); `write proc://<name>/kill` stops it. `write proc://<name>/mode` accepts `persist`, `session`, or `detached`.
 - Background progress / completion:
   - delivered through `onUpdate` / async job manager, not the initial return.
   - running updates contain tail text and `details.async.state: "running"` only after the job is considered backgrounded.
@@ -130,9 +130,9 @@ An anchored rule such as `^\s*git\s+commit\b` can therefore match the `git commi
 
 ### Interaction and selection guide
 
-The approval policy is resolved before execution. A matching `bash.patterns` `deny` never reaches the interceptor. A matching `prompt` reaches the interceptor only after the user accepts the approval request. If an accepted call then matches an interceptor rule, the Bash call still does not run; the model receives the routing error and should invoke the dedicated tool.
+The approval policy is resolved before execution. A matching `bash.patterns` `deny` never reaches the interceptor. A matching `prompt` reaches the interceptor only after the architect accepts the approval request. If an accepted call then matches an interceptor rule, the Bash call still does not run; the model receives the routing error and should invoke the dedicated tool.
 
-Avoid configuring the same operation in both places unless that two-step behavior is intended. For example, a `prompt` rule for `cat *` plus an enabled `cat`-to-`read` interceptor first asks the user to approve Bash, then rejects Bash and asks the model to use `read`.
+Avoid configuring the same operation in both places unless that two-step behavior is intended. For example, a `prompt` rule for `cat *` plus an enabled `cat`-to-`read` interceptor first asks the architect to approve Bash, then rejects Bash and asks the model to use `read`.
 
 Choose the setting by the desired outcome:
 
@@ -141,7 +141,7 @@ Choose the setting by the desired outcome:
 
 ## Flow
 
-1. `BashTool.execute()` in `packages/coding-agent/src/tools/bash.ts` reads `command`. A `name` selects supervised service mode (through the user's shell and launch broker); normal Bash execution defaults `timeout` to `300`.
+1. `BashTool.execute()` in `packages/coding-agent/src/tools/bash.ts` reads `command`. A `name` selects supervised service mode (through the architect's shell and launch broker); normal Bash execution defaults `timeout` to `300`.
 2. If `cwd` is absent, it rewrites a leading `cd <path> && ...` into the structured `cwd` field and strips that prefix from `command`.
 3. If `async: true` is requested while `async.enabled` is off, it throws `ToolError` before any execution.
 4. If `bashInterceptor.enabled` is on, `checkBashInterception()` runs against both the original command and the `cd`-stripped command. For each form, configured regexes still check the complete input first, then each flat command separated by unquoted/unescaped `&&`, `||`, `;`, `|`, `|&`, `&`, or newlines (excluding stages that consume piped stdin from `|` or `|&`, including across blank/comment continuations), followed by versions of those fragments without leading `NAME=value` assignments. A matching enabled rule throws before execution.

@@ -73,7 +73,7 @@
 
 ### Fixed
 
-- The ask tool card now renders the note the user attached to their answer; previously it was dropped from HTML exports and the collab guest view.
+- The ask tool card now renders the note the architect attached to their answer; previously it was dropped from HTML exports and the collab guest view.
 
 ## [17.2.10] - 2026-08-06
 

@@ -934,7 +934,7 @@ BUNDLED/DISTRIBUTED (97)
 
 DOWNLOADED-AT-RUNTIME (84)
 --------------------------
-These packages are not included in npm bundles or standalone release assets. They are optional peer/side-runtime dependencies acquired by the user's package installer or by the versioned runtime installer.
+These packages are not included in npm bundles or standalone release assets. They are optional peer/side-runtime dependencies acquired by the architect's package installer or by the versioned runtime installer.
 - @anush008/tokenizers 0.0.0 — MIT
 - @anush008/tokenizers-darwin-universal 0.0.0 — MIT
 - @anush008/tokenizers-linux-x64-gnu 0.0.0 — MIT
@@ -1046,7 +1046,7 @@ These packages participate only in generation/web build tooling and are not ship
 
 SCOPED NON-PERMISSIVE PACKAGES
 ------------------------------
-The exact @img/sharp-libvips-* 1.2.4 all-target family is LGPL-3.0-or-later. It is not distributed in OMP npm bundles or standalone assets: @huggingface/transformers is always external, installed into a user-side versioned runtime on demand, and sharp is stubbed for speech/text. The dynamically loaded native library remains replaceable. Corresponding source is available from https://github.com/lovell/sharp-libvips.git and upstream libvips sources.
+The exact @img/sharp-libvips-* 1.2.4 all-target family is LGPL-3.0-or-later. It is not distributed in OMP npm bundles or standalone assets: @huggingface/transformers is always external, installed into an architect-side versioned runtime on demand, and sharp is stubbed for speech/text. The dynamically loaded native library remains replaceable. Corresponding source is available from https://github.com/lovell/sharp-libvips.git and upstream libvips sources.
 
 lightningcss 1.32.0 and its exact target leaves are MPL-2.0 build-only dependencies. MPL is not globally allowed and these packages are absent from runtime artifacts.
 
@@ -16680,7 +16680,7 @@ Used by:
 
 Full license text:
 
-Copyright (c) 2014 Chris Wong
+Copyright (c) 2014 the Architect Wong
 
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated

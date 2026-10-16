@@ -105,7 +105,7 @@ Both a selected window and `desktop` expose:
 - `type(text, { takeover? })`
 - `press(chord | string[], { takeover? })`
 
-A window also exposes `raise()`, `ax(...)`, `find(...)`, and `ref(...)`. Window input defaults to background delivery without deliberate activation or pointer movement. `takeover: true` briefly activates the target and posts real input; use it only after that call reports `BackgroundUnavailable` or a screenshot proves a no-op, and AX cannot perform the action. Never replay uncertain input blindly. Desktop-root pointer helpers drive the user's real pointer, so prefer window handles. Pixel coordinates belong to the most recent full screenshot of the same target. Coordinate input before capture, after target/layout changes, or with another target's frame throws.
+A window also exposes `raise()`, `ax(...)`, `find(...)`, and `ref(...)`. Window input defaults to background delivery without deliberate activation or pointer movement. `takeover: true` briefly activates the target and posts real input; use it only after that call reports `BackgroundUnavailable` or a screenshot proves a no-op, and AX cannot perform the action. Never replay uncertain input blindly. Desktop-root pointer helpers drive the architect's real pointer, so prefer window handles. Pixel coordinates belong to the most recent full screenshot of the same target. Coordinate input before capture, after target/layout changes, or with another target's frame throws.
 
 Screenshots are PNGs written under the OS temp directory. Native capture is resized to the effective capture caps before both saving and displaying; both Eval runtimes preserve the original-detail image bytes and metadata, so Eval does not perform a second resize or encode. Unless `silent: true`, each capture emits a status text block and an image block. Details record captured dimensions, original source dimensions, and target.
 
@@ -165,7 +165,7 @@ Result details contain the resolved `code`, `readOnly`, `screenshots`, optional 
 ## Side effects
 
 - Captures real windows or the selected desktop composite into provider context and writes PNGs to the OS temp directory.
-- Sends real keyboard/pointer input. Window background delivery is intended to preserve focus, pointer, and window order; `takeover: true` may temporarily activate the target. Desktop-root pointer calls affect the user's real pointer.
+- Sends real keyboard/pointer input. Window background delivery is intended to preserve focus, pointer, and window order; `takeover: true` may temporarily activate the target. Desktop-root pointer calls affect the architect's real pointer.
 - Reads or writes the system clipboard.
 - Executes full-access JavaScript and may invoke other session tools through `tool.*`.
 - Keeps a native desktop session and Bun worker alive across calls.
@@ -198,4 +198,4 @@ macOS capture uses ScreenCaptureKit on 14+ in one persistent native main-loop wo
 - Prefer AX actions to pixels when a semantic control exists.
 - Prefer direct inspection helpers; use `read_only: true` for inspection-only `computer.run` calls.
 - Never mix screenshot-pixel coordinates with global AX coordinates.
-- Confirm consequential or irreversible actions unless the user's direct request already authorized that exact action.
+- Confirm consequential or irreversible actions unless the architect's direct request already authorized that exact action.

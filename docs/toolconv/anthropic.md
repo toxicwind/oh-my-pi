@@ -66,11 +66,11 @@ The Messages API uses primarily two conversational roles, `user` and `assistant`
 - `assistant` messages contain AI-generated `text`, `thinking`, and `tool_use` (and `server_tool_use`) blocks.
 - `user` messages contain your `text`/`image`/`document` content and `tool_result` blocks.
 
-There are no named "channels". The closest analogue to a reasoning channel is the extended-thinking `thinking` content block (a first-class block with a cryptographic `signature`), kept separate from the user-visible `text` block. When thinking is enabled alongside tools, the `thinking` block(s) from a tool-calling turn must be passed back unmodified in the follow-up request.
+There are no named "channels". The closest analogue to a reasoning channel is the extended-thinking `thinking` content block (a first-class block with a cryptographic `signature`), kept separate from the architect-visible `text` block. When thinking is enabled alongside tools, the `thinking` block(s) from a tool-calling turn must be passed back unmodified in the follow-up request.
 
 The agentic loop is keyed on `stop_reason`:
 
-1. Send `tools` + the user message.
+1. Send `tools` + the architect message.
 2. Claude responds with `stop_reason: "tool_use"` and one or more `tool_use` blocks (optionally preceded by a `text` block).
 3. Execute each tool; build a `tool_result` block per call.
 4. Append the assistant message **and** a `user` message carrying all `tool_result` blocks; resend.
@@ -151,7 +151,7 @@ Native stop reasons map to pi's `stopReason`: `tool_use` → `toolUse`; `max_tok
 When `tools` is present, the API constructs a tool-use system prompt with this skeleton (verified from "Define tools"):
 
 ```text
-In this environment you have access to a set of tools you can use to answer the user's question.
+In this environment you have access to a set of tools you can use to answer the architect's question.
 {{ FORMATTING INSTRUCTIONS }}
 String and scalar parameters should be specified as is, while lists and objects should use JSON format. Note that spaces for string values are not stripped. The output is not expected to be valid XML and is parsed with regular expressions.
 Here are the functions available in JSONSchema format:
@@ -651,7 +651,7 @@ error message goes here
 The legacy system-prompt preamble (verbatim from the archived doc) was:
 
 ```text
-In this environment you have access to a set of tools you can use to answer the user's question.
+In this environment you have access to a set of tools you can use to answer the architect's question.
 You may call them like this:
 <function_calls>
 <invoke>

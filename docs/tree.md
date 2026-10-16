@@ -10,7 +10,7 @@ This is an in-file leaf move, not a new session export.
 - Opens `TreeSelectorComponent` with keyboard navigation, filters, and search
 - On selection, calls `AgentSession.navigateTree(targetId, { summarize, customInstructions })`
 - Rebuilds visible chat from the new leaf path
-- Optionally prefills editor text when selecting a user/custom message
+- Optionally prefills editor text when selecting an architect/custom message
 
 Primary implementation:
 

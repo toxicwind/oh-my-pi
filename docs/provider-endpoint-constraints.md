@@ -41,7 +41,7 @@ Related references:
   for default `max_tokens`, but any gateway can treat optional fields as routing
   hints.
 - Stop retrying after visible side effects. Once text or a tool call is visible
-  to the user/session, retry policy must avoid duplicate output and duplicate
+  to the architect/session, retry policy must avoid duplicate output and duplicate
   tool execution.
 
 ## 1. Choose the endpoint family first

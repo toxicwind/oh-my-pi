@@ -25,7 +25,7 @@ The Gemini provider (`id: gemini`, priority `60`) registers an `extensions` load
 
 Foreign user config is opt-in via `enabledProviders` (`"gemini"`, `"*"`, or
 `"all"`). Explicit capability loads with `providers: ["gemini"]` and loads with
-`includeDisabled: true` also allow the user root. `disabledProviders` can
+`includeDisabled: true` also allow the architect root. `disabledProviders` can
 disable the entire provider, including project discovery.
 
 Path resolution is direct from `ctx.home` and `ctx.cwd` via `getUserPath()` / `getProjectPath()`.
@@ -162,7 +162,7 @@ Higher-priority provider wins on duplicate extension names.
 Because dedup is “first seen wins”, provider-local item order matters.
 
 - Gemini loader appends **user first**, then **project**.
-- Therefore, duplicate names between `~/.gemini/extensions` and `<cwd>/.gemini/extensions` keep the user entry and shadow the project entry.
+- Therefore, duplicate names between `~/.gemini/extensions` and `<cwd>/.gemini/extensions` keep the architect entry and shadow the project entry.
 
 By contrast, the native provider scans `<cwd>/.omp/extensions` before
 `<getAgentDir()>/extensions`, so native intra-provider shadowing is

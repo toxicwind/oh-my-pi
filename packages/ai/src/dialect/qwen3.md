@@ -10,7 +10,7 @@ Emit each tool call as one `<tool_call>` block wrapping a single-line JSON objec
 
 Do any private reasoning in `<think>...</think>` before your tool calls.
 
-Tool results arrive later in a user turn:
+Tool results arrive later in an architect turn:
 
 ```text
 <tool_response>

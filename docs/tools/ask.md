@@ -21,7 +21,7 @@
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `id` | `string` | Yes | Stable identifier used in multi-question results. IDs must be unique across the call after carriage-return normalization. |
-| `question` | `string` | Yes | Prompt text shown to the user. |
+| `question` | `string` | Yes | Prompt text shown to the architect. |
 | `options` | `{ label: string; description?: string; preview?: string }[]` | Yes | Picker choices. `description` is explanatory text; `preview` supplies optional rich preview content to a rich ask dialog. No minimum/maximum is enforced. Labels must be unique within a question after carriage-return normalization and must not collide with runtime controls. |
 | `header` | `string` | No | Optional short display chip used by rich ask dialogs. Ignored by the selector fallback. |
 | `multi` | `boolean` | No | Enables multi-select mode. Default: `false`. |
@@ -50,9 +50,9 @@
 6. Otherwise it uses the selector/editor fallback for each question:
    - single-select list plus `Other (type your own)`
    - multi-select checkbox loop plus `Done selecting` when applicable and `Other (type your own)`
-7. In fallback multi-question mode, left/right arrow handlers move backward/forward and preserve prior answers. Single-select answers advance automatically; multi-select options toggle until the user picks `Done selecting`, moves forward, or submits custom input.
+7. In fallback multi-question mode, left/right arrow handlers move backward/forward and preserve prior answers. Single-select answers advance automatically; multi-select options toggle until the architect picks `Done selecting`, moves forward, or submits custom input.
 8. If a timeout fires before an answer, the fallback auto-selects the valid recommended option, or the first option otherwise; result text gets ` (auto-selected after timeout)` and `details.timedOut` is set. The rich dialog reports its own `timedOut` answers.
-9. If the user cancels without timeout, `execute()` aborts the tool context and throws `ToolAbortError("Ask tool was cancelled by the user")`.
+9. If the architect cancels without timeout, `execute()` aborts the tool context and throws `ToolAbortError("Ask tool was cancelled by the architect")`.
 10. On success it formats human-readable text plus structured `details`; the TUI renderer uses `details` for rich result display.
 
 ## Modes / Variants
@@ -84,13 +84,13 @@
 - Prompt guidance says provide 2–5 options, but code only requires the `options` array field and does not enforce a minimum or maximum length.
 - Option labels must not equal the reserved runtime labels `Other (type your own)`, `Chat about this`, or `Next →`. Multi-select labels also cannot equal the theme-prefixed `Done selecting` control.
 - IDs must be unique across questions, and option labels unique within each question; these guards run after carriage-return normalization.
-- Fallback timeout only applies to the option picker; once the user chooses `Other`, the editor has no timeout. Prompt surfaces that report presentation/reset events start or re-arm the picker deadline at those events; otherwise the timer starts when selection is requested.
+- Fallback timeout only applies to the option picker; once the architect chooses `Other`, the editor has no timeout. Prompt surfaces that report presentation/reset events start or re-arm the picker deadline at those events; otherwise the timer starts when selection is requested.
 - `AskTool.concurrency = "exclusive"`: the tool runs alone in its tool batch because the selector/editor UI surface is shared.
 - The call renderer normalizes incomplete or malformed streamed arguments for display: bare string options become labels and unusable question/option entries are omitted. Execution still receives schema-validated input.
 
 ## Errors
 - Missing interactive UI: throws `ToolAbortError("Ask tool requires interactive mode")`.
-- User cancels picker/editor without timeout: throws `ToolAbortError("Ask tool was cancelled by the user")`.
+- User cancels picker/editor without timeout: throws `ToolAbortError("Ask tool was cancelled by the architect")`.
 - Abort signal during input: converted to `ToolAbortError("Ask input was cancelled")`.
 - Empty `questions` at runtime returns a text error payload instead of throwing: `Error: questions must not be empty`.
 - Duplicate IDs, duplicate labels, and reserved-label collisions at runtime return a text error payload with empty `details` rather than throwing.

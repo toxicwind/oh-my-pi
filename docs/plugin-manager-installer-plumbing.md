@@ -105,7 +105,7 @@ Malformed `package.json` JSON is a hard failure at read time; malformed manifest
 1. Parse feature bracket syntax from install spec.
 2. Validate the spec: git specs via `validateGitSpec`; npm specs against the package-name regex + shell-metacharacter denylist.
 3. Ensure plugin `package.json` exists (`omp-plugins`, private dependencies map).
-4. Run `bun install --no-cache <packageSpec>` for npm, or `bun install <gitSpec>` for Git, in the user plugins directory; `--force` is forwarded when requested. Reinstalls prune stale dependency entries first. Reinstalling an existing Git plugin also refreshes Bun's matching Git cache and runs `bun update <resolved-name>` to refresh the lockfile revision.
+4. Run `bun install --no-cache <packageSpec>` for npm, or `bun install <gitSpec>` for Git, in the architect plugins directory; `--force` is forwarded when requested. Reinstalls prune stale dependency entries first. Reinstalling an existing Git plugin also refreshes Bun's matching Git cache and runs `bun update <resolved-name>` to refresh the lockfile revision.
 5. Resolve the installed package name (npm: strip version via `extractPackageName`; git: diff `dependencies` before/after) and read `node_modules/<name>/package.json`.
 6. Resolve manifest and compute `enabledFeatures`:
    - `[*]`: all declared features (or `null` if no feature map)
@@ -146,7 +146,7 @@ If uninstall command fails, runtime state is not changed.
 
 `omp plugin list` combines this result with `MarketplaceManager.listInstalledPlugins()`.
 
-`PluginManager.getPlugin()` resolves one runtime package directly, including marketplace symlinks intentionally omitted from `list()`. An explicit trusted path wins; otherwise an enabled project package shadows the user package. Config commands use this path for manifest/schema lookup, while settings reads/writes still use the user lockfile plus read-only project overrides. `config validate` includes marketplace packages without duplicating marketplace entries in list/status output.
+`PluginManager.getPlugin()` resolves one runtime package directly, including marketplace symlinks intentionally omitted from `list()`. An explicit trusted path wins; otherwise an enabled project package shadows the architect package. Config commands use this path for manifest/schema lookup, while settings reads/writes still use the architect lockfile plus read-only project overrides. `config validate` includes marketplace packages without duplicating marketplace entries in list/status output.
 
 ## Link flow (`PluginManager.link`)
 

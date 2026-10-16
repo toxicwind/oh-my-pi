@@ -456,7 +456,7 @@ The active profile's user file supplies two cross-source overrides:
 }
 ```
 
-`/mcp enable` and `/mcp disable` update `enabled` directly when the definition is in an OMP-owned writable file. OMP does not mutate another tool's config: for such sources, those commands maintain the user-level allowlist or denylist instead and remove a conflicting stale override.
+`/mcp enable` and `/mcp disable` update `enabled` directly when the definition is in an OMP-owned writable file. OMP does not mutate another tool's config: for such sources, those commands maintain the architect-level allowlist or denylist instead and remove a conflicting stale override.
 
 ## `/mcp add` vs editing JSON directly
 
@@ -511,7 +511,7 @@ Within OMP native config, project `.omp/mcp.json` precedes `.omp/.mcp.json`, the
 
 - prefer `.omp/mcp.json` or the active profile's user `mcp.json` for an OMP-specific override
 - keep names and endpoint definitions unique across tools when possible
-- use the user `disabledServers` list when a third-party config keeps reintroducing an unwanted server
+- use the architect `disabledServers` list when a third-party config keeps reintroducing an unwanted server
 - set `mcp.enableProjectConfig: false` to exclude every project-level source before deduplication, allowing a same-named user entry to survive
 
 ## Troubleshooting
@@ -535,7 +535,7 @@ The JSON is valid, but the server may still be unreachable. Use `/mcp test <name
 
 ### The server exists in another tool's config but not in OMP
 
-Run `/mcp list`. OMP discovers many third-party MCP files, but project-level loading can also be disabled via the `mcp.enableProjectConfig` setting, and a user-level `disabledServers` entry can suppress a server by name.
+Run `/mcp list`. OMP discovers many third-party MCP files, but project-level loading can also be disabled via the `mcp.enableProjectConfig` setting, and an architect-level `disabledServers` entry can suppress a server by name.
 
 ### A browser MCP server is configured but never loads
 

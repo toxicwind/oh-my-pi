@@ -3,7 +3,7 @@ Resume autoresearch on the active session.
 {{branch_status_line}}
 {{#if has_resume_context}}
 
-Additional context from the user:
+Additional context from the architect:
 
 {{resume_context}}
 {{/if}}

@@ -93,7 +93,7 @@ Runtime precedence:
 2. theme JSON `symbols.preset`
 3. fallback `"unicode"`
 
-In interactive mode, a successful Glyph Protocol handshake upgrades a Unicode preset whose setting provenance is `default` to Nerd Font icons without changing the saved setting. An explicitly configured preset, including `unicode`, is not upgraded. A live Tern native surface forces the Nerd preset process-locally and restores the user's preset when it closes.
+In interactive mode, a successful Glyph Protocol handshake upgrades a Unicode preset whose setting provenance is `default` to Nerd Font icons without changing the saved setting. An explicitly configured preset, including `unicode`, is not upgraded. A live Tern native surface forces the Nerd preset process-locally and restores the architect's preset when it closes.
 
 Invalid override keys are ignored and logged (`logger.debug`).
 

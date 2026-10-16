@@ -43,7 +43,7 @@ ChatML. Each message renders as:
 
 - Roles: `system`, `user`, `assistant`, `tool`. There is no separate "channel" concept; the only sub-stream is the `<think>` reasoning block inside an assistant turn.
 - `<|im_end|>\n` terminates every turn. With `add_generation_prompt=True` the prompt ends with `<|im_start|>assistant\n` and the model continues from there.
-- **System turn:** if the caller supplies a `system` message it becomes the first turn. When `tools` are present, the tool advertisement is merged **into** that same system turn (the user's system text first, then `\n\n`, then the `# Tools` block — see below). Qwen3 injects no default system prompt when none is given.
+- **System turn:** if the caller supplies a `system` message it becomes the first turn. When `tools` are present, the tool advertisement is merged **into** that same system turn (the architect's system text first, then `\n\n`, then the `# Tools` block — see below). Qwen3 injects no default system prompt when none is given.
 - **Tool-result turns use the `user` envelope.** Qwen3's template maps every `role: "tool"` message into a `<|im_start|>user` turn carrying `<tool_response>` blocks (consecutive tool messages are coalesced into one user turn). This differs from classic Hermes 2 Pro, which used a dedicated `<|im_start|>tool` turn for results — Qwen folds them into `user`.
 - **Thinking/reasoning:** carried in `<think>…</think>` at the start of an assistant turn (see the Parsing notes for the toggle and the history-rerender rule).
 
@@ -57,7 +57,7 @@ Tools are advertised inside the system turn. The template emits a fixed preamble
 
 # Tools
 
-You may call one or more functions to assist with the user query.
+You may call one or more functions to assist with the architect query.
 
 You are provided with function signatures within <tools></tools> XML tags:
 <tools>
@@ -132,7 +132,7 @@ You are a helpful assistant. Current Date: 2024-09-30.
 
 # Tools
 
-You may call one or more functions to assist with the user query.
+You may call one or more functions to assist with the architect query.
 
 You are provided with function signatures within <tools></tools> XML tags:
 <tools>
@@ -270,7 +270,7 @@ double dispatch.
 - **Arguments object vs string:** on the wire `arguments` is a nested JSON object; the OpenAI layer hands it back as a JSON string. Code that reads the raw stream must parse an object; code that reads the API must `json.loads` the string. Do not double-encode.
 - **`<tools>` is not a token.** Only count on `<|im_start|>`/`<|im_end|>` (and the `*tool_call*`/`*tool_response*`/`*think*` single tokens) being atomic. `<tools>`/`</tools>` are plain text.
 - **Regex/streaming parse:** the vLLM `hermes` parser (`vllm/tool_parsers/hermes_tool_parser.py`, `Hermes2ProToolParser`) keys on the literal `<tool_call>` / `</tool_call>` substrings and JSON-decodes the body, supporting multiple blocks per turn. In streaming it buffers from `<tool_call>` until it can incrementally parse `name` then `arguments`; partial argument JSON is emitted as argument deltas. Text before the first `<tool_call>` is streamed as ordinary content.
-- **Thinking toggle:** `enable_thinking=False` (passed via `chat_template_kwargs={"enable_thinking": False}` over the OpenAI API, or `tokenizer.apply_chat_template(..., enable_thinking=False)`) injects an empty `<think>\n\n</think>\n\n` into the generation prompt, hard-suppressing reasoning. Soft switches `/think` and `/no_think` in a user/system message flip it per-turn when thinking is enabled. Greedy decoding is discouraged for Qwen3 (repetition risk).
+- **Thinking toggle:** `enable_thinking=False` (passed via `chat_template_kwargs={"enable_thinking": False}` over the OpenAI API, or `tokenizer.apply_chat_template(..., enable_thinking=False)`) injects an empty `<think>\n\n</think>\n\n` into the generation prompt, hard-suppressing reasoning. Soft switches `/think` and `/no_think` in an architect/system message flip it per-turn when thinking is enabled. Greedy decoding is discouraged for Qwen3 (repetition risk).
 - **History rerender asymmetry:** when `apply_chat_template` re-renders a stored conversation, it emits the `<think>` block only for the final assistant message or messages carrying `reasoning_content`; reasoning from earlier turns is dropped. So a stored intermediate tool-call assistant turn shows no `<think>` block, while the live generation step that produced it was prefixed with one (in non-thinking mode). Reasoning is preserved only within the current multi-step tool sequence (after the last real user query).
 - **Reasoning models + stopword templates:** Qwen warns against ReAct-style stopword tool templates for Qwen3, since reasoning text may contain the stopwords and corrupt parsing — use this native Hermes template instead.
 - **Robustness:** the format is prompt/template-driven, so malformed output is possible

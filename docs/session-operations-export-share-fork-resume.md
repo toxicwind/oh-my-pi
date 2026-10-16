@@ -361,7 +361,7 @@ With an argument:
 
 ### `--resume` (no value)
 
-- `main.ts` uses `SessionManager.listForPicker()` for the current cwd/sessionDir and opens the picker in current-folder scope. When that list is empty it preloads `SessionManager.listAllForPicker()` so a user-initiated Tab switch is immediate; it does not auto-switch scopes. `No sessions found` is printed only when the global picker list is also empty.
+- `main.ts` uses `SessionManager.listForPicker()` for the current cwd/sessionDir and opens the picker in current-folder scope. When that list is empty it preloads `SessionManager.listAllForPicker()` so an architect-initiated Tab switch is immediate; it does not auto-switch scopes. `No sessions found` is printed only when the global picker list is also empty.
 - Selected path is opened with `SessionManager.open(selectedPath)` before session creation; the process/project scope then switches to the resumed session's cwd (`switchToResumedProject`), reloading cwd-scoped settings and plugin caches and re-resolving scoped models.
 
 ### `--resume <value>`
@@ -378,7 +378,7 @@ Id/filename-prefix match behavior (local or global):
 
 - If the matched session's recorded directory no longer exists, CLI asks `Session's directory no longer exists (...). Move (re-root) it into the current directory? [Y/n]`.
   - On yes (default), `SessionManager.open()` is anchored at the missing source cwd with `initialCwd`, then `manager.moveTo(cwd, sessionDir)` re-roots the existing session without duplicating it.
-  - On no, startup is cancelled. In non-TTY mode, startup fails with an error directing the user to run interactively.
+  - On no, startup is cancelled. In non-TTY mode, startup fails with an error directing the architect to run interactively.
 - If the recorded directory still exists, the matched session is opened directly. Startup later changes the process/project scope to the resumed session's cwd and reloads cwd-scoped settings and plugin caches. It is not implicitly forked.
 
 Path-valued resume opens directly rather than using the missing-directory move

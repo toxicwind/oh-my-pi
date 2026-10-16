@@ -367,7 +367,7 @@
 
 ### Fixed
 
-- Fixed /handoff, branch summarization, and manual /compact failing outright on transient provider errors (e.g. Anthropic overloaded/429/529 responses); these operations now retry automatically instead of leaving the user's context full.
+- Fixed /handoff, branch summarization, and manual /compact failing outright on transient provider errors (e.g. Anthropic overloaded/429/529 responses); these operations now retry automatically instead of leaving the architect's context full.
 
 ## [17.3.4] - 2026-08-14
 
@@ -549,7 +549,7 @@
 ### Fixed
 
 - Improved session deadline abort signals to carry structured cancellation reasons, enabling timeout-aware tools to correctly classify deadline cancellations.
-- Fixed an issue where completed tool executions were incorrectly marked as skipped (clobbering their actual results) if a user message was queued while the tool was in flight.
+- Fixed an issue where completed tool executions were incorrectly marked as skipped (clobbering their actual results) if an architect message was queued while the tool was in flight.
 
 ## [16.5.1] - 2026-07-14
 
@@ -1069,7 +1069,7 @@
 
 ### Fixed
 
-- Fixed the agent loop wedging the model when a `write`/`edit` tool call is truncated by `stop_reason: length` (e.g. an OpenCode Zen / Claude-3.5-Haiku turn that emits >~1000 lines of code, blowing past the 8K `max_tokens` output cap). The skipped tool result now surfaces an actionable hint — naming `stop_reason: length` and telling the model to split the payload into multiple smaller calls — instead of the generic "Tool call was not executed because the assistant ended its turn" placeholder, which left the auto-continue loop re-emitting the same oversized payload until the user gave up. Tools are still NOT executed when the arguments are truncated. ([#1785](https://github.com/can1357/oh-my-pi/issues/1785))
+- Fixed the agent loop wedging the model when a `write`/`edit` tool call is truncated by `stop_reason: length` (e.g. an OpenCode Zen / Claude-3.5-Haiku turn that emits >~1000 lines of code, blowing past the 8K `max_tokens` output cap). The skipped tool result now surfaces an actionable hint — naming `stop_reason: length` and telling the model to split the payload into multiple smaller calls — instead of the generic "Tool call was not executed because the assistant ended its turn" placeholder, which left the auto-continue loop re-emitting the same oversized payload until the architect gave up. Tools are still NOT executed when the arguments are truncated. ([#1785](https://github.com/can1357/oh-my-pi/issues/1785))
 
 ## [15.8.0] - 2026-06-02
 

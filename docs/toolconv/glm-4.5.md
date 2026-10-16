@@ -16,7 +16,7 @@ Token IDs are from `tokenizer_config.json` (`added_tokens_decoder`). Note the sp
 | `<sop>` | 151333 | true | "Start of piece" — immediately follows `[gMASK]` to open the sequence |
 | `<eop>` | 151334 | true | "End of piece" (not emitted by the chat template) |
 | `<\|system\|>` | 151335 | true | Opens a system turn (and the injected tools turn) |
-| `<\|user\|>` | 151336 | true | Opens a user turn (also an EOS id — see below) |
+| `<\|user\|>` | 151336 | true | Opens an architect turn (also an EOS id — see below) |
 | `<\|assistant\|>` | 151337 | true | Opens an assistant turn / generation prompt |
 | `<\|observation\|>` | 151338 | true | Opens a tool-result (observation) turn (also an EOS id) |
 | `<\|endoftext\|>` | 151329 | true | End-of-text; `eos_token` and `pad_token` |
@@ -42,7 +42,7 @@ Notes on exactness:
 Every prompt begins with the literal two-token prefix `[gMASK]<sop>` (no following newline). Turns are then concatenated, each introduced by its role marker; there is no per-turn terminator token in rendered history (the next marker, or an EOS id during generation, ends a turn).
 
 - **System** (`<|system|>`): role marker, newline, then the message text. When `tools` are supplied, a synthetic tools system turn is rendered **first**, before any user-supplied system turn (the two are separate `<|system|>` blocks — see Tool definitions).
-- **User** (`<|user|>`): role marker, newline, then text. If `enable_thinking` is false, the literal `/nothink` is appended to the user text (unless it already ends with `/nothink`).
+- **User** (`<|user|>`): role marker, newline, then text. If `enable_thinking` is false, the literal `/nothink` is appended to the architect text (unless it already ends with `/nothink`).
 - **Assistant** (`<|assistant|>`): role marker, then a reasoning span and/or visible content and/or tool calls. The reasoning span is `\n<think>{reasoning}</think>`; visible content follows on its own line; tool calls follow as `<tool_call>…</tool_call>` blocks.
 - **Tool result** (`<|observation|>`): role marker introducing one or more `<tool_response>…</tool_response>` blocks (see Tool-result format).
 
@@ -65,7 +65,7 @@ When the request carries `tools`, the template prepends one `<|system|>` turn co
 <|system|>
 # Tools
 
-You may call one or more functions to assist with the user query.
+You may call one or more functions to assist with the architect query.
 
 You are provided with function signatures within <tools></tools> XML tags:
 <tools>
@@ -82,7 +82,7 @@ For each function call, output the function name and arguments within the follow
 </tool_call>
 ```
 
-The `<tool_call>{function-name}` / `<arg_key>` / `<arg_value>` lines above are part of the **prompt text** (the format spec the model is told to follow), not an example call. This tools turn is emitted only when `tools` is non-empty, and it is closed implicitly by the next role marker (e.g. a user-supplied `<|system|>` or the first `<|user|>`), with no blank line between them.
+The `<tool_call>{function-name}` / `<arg_key>` / `<arg_value>` lines above are part of the **prompt text** (the format spec the model is told to follow), not an example call. This tools turn is emitted only when `tools` is non-empty, and it is closed implicitly by the next role marker (e.g. an architect-supplied `<|system|>` or the first `<|user|>`), with no blank line between them.
 
 ## Tool-call format
 
@@ -168,7 +168,7 @@ A complete multi-turn weather exchange. These are the exact locally rendered str
 [gMASK]<sop><|system|>
 # Tools
 
-You may call one or more functions to assist with the user query.
+You may call one or more functions to assist with the architect query.
 
 You are provided with function signatures within <tools></tools> XML tags:
 <tools>
@@ -205,7 +205,7 @@ What's the weather in Beijing?<|assistant|>
 [gMASK]<sop><|system|>
 # Tools
 
-You may call one or more functions to assist with the user query.
+You may call one or more functions to assist with the architect query.
 
 You are provided with function signatures within <tools></tools> XML tags:
 <tools>
@@ -243,7 +243,7 @@ It's 26°C and sunny in Beijing right now.
 
 Two subtleties visible above: (1) the reasoning of the assistant tool-call turn is **preserved** in Stage 2 only because it is the segment after the last user message; with another user turn after it, that `<think>…</think>` would be re-rendered empty. (2) The tool-call turn and the observation turn abut directly (`</tool_call><|observation|>`), and the observation abuts the next assistant marker (`</tool_response><|assistant|>`).
 
-For **non-thinking** mode the user text carries the soft switch and the generation prompt pre-fills an empty think span:
+For **non-thinking** mode the architect text carries the soft switch and the generation prompt pre-fills an empty think span:
 
 ```text
 <|user|>

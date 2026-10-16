@@ -51,7 +51,7 @@ Rust creates `brush_core::Shell` with:
 - in-process utility builtins registered from `pi_builtins::utility_builtins()` (see the next section),
 - an opt-in `git` builtin (`crates/pi-shell/src/git.rs`, gated by `PI_SMART_GIT`) that serves supported `git worktree add` invocations through `pi-vcs`: copy-on-write clone, worktree registration, and reconciliation to the target commit, with an in-process checkout fallback when cloning is unavailable. Unsupported commands/options/repository configurations run the git binary with the original arguments,
 - skip-list for shell-sensitive vars (`PS1`, `PWD`, `SHLVL`, bash function exports, etc.),
-- a non-exported `env="$env"` fallback so PowerShell-style `$env:NAME` survives brush parameter expansion unless the user shadows `env`.
+- a non-exported `env="$env"` fallback so PowerShell-style `$env:NAME` survives brush parameter expansion unless the architect shadows `env`.
 
 Session env behavior:
 

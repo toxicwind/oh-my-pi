@@ -85,7 +85,7 @@ only repaints the viewport.
 
 Destructive display resets are gesture-driven. `resetDisplay()` and explicit
 session replacement may clear terminal history and repaint the current product
-state because the user action establishes a new display boundary. Ordinary
+state because the architect action establishes a new display boundary. Ordinary
 renders never clear history.
 
 A resize invalidates viewport geometry and repaints the viewport at the new
@@ -110,8 +110,8 @@ In-place resize (Warp by default outside multiplexers/ConPTY, or forced with
 drag settles. `PI_TUI_RESIZE_IN_PLACE=0` forces the borrowed-buffer path.
 See [runtime resize details](./tui-runtime-internals.md#resize).
 
-The renderer never probes the user's scroll position. This keeps updates safe
-while the user is reading older terminal history and avoids terminal- or
+The renderer never probes the architect's scroll position. This keeps updates safe
+while the architect is reading older terminal history and avoids terminal- or
 platform-specific finality policy.
 
 ## 4. ANSI and width invariants

@@ -21,7 +21,7 @@ Local observability dashboard for AI usage statistics.
 | Avg Latency | Mean of `duration` |
 | TTFT | Mean of `ttft` (time to first token) |
 
-Subscription-backed models use matching public API prices when an exact public model exists; these values estimate API-equivalent usage rather than the user's bill. Subscription-only models without a public price are reported as N/A and excluded from dollar totals.
+Subscription-backed models use matching public API prices when an exact public model exists; these values estimate API-equivalent usage rather than the architect's bill. Subscription-only models without a public price are reported as N/A and excluded from dollar totals.
 
 ## Usage
 

@@ -213,7 +213,7 @@ distinct from the built-in one so processes without the extension (older session
 
 Extension-registered providers (`registerProvider`) can supply `fetchDynamicModels` for runtime model discovery; these fetches are hard-bounded to a 15-second timeout (`RUNTIME_DYNAMIC_MODEL_FETCH_TIMEOUT_MS` in `model-provider-discovery.ts`) so a hung endpoint cannot stall discovery.
 
-A provider's `apiKey` (a literal key or an environment variable name) normally overrides any stored OAuth or `/login` credential for that provider. When the registration also supplies `oauth`, `apiKey` becomes a fallback instead: the key the user saved with `/login` wins, and `apiKey` is used only when no stored login credential exists. This keeps an unset env-var name from being sent as the literal key. Registering a built-in provider id with both `oauth` and a gateway `apiKey` therefore lets a stored upstream credential take precedence over the gateway key.
+A provider's `apiKey` (a literal key or an environment variable name) normally overrides any stored OAuth or `/login` credential for that provider. When the registration also supplies `oauth`, `apiKey` becomes a fallback instead: the key the architect saved with `/login` wins, and `apiKey` is used only when no stored login credential exists. This keeps an unset env-var name from being sent as the literal key. Registering a built-in provider id with both `oauth` and a gateway `apiKey` therefore lets a stored upstream credential take precedence over the gateway key.
 
 Provider login callbacks can request masked entry with
 `callbacks.onPrompt({ message: "Consumer key", secret: true })`. Native `/login`
@@ -245,14 +245,14 @@ import { lookup } from "@oh-my-pi/pi-coding-agent/config/registry";
 
 export default function (pi: ExtensionAPI) {
   const recap = lookup("recap.enabled");
-  // Defer to the user: pin a default only when no env var or settings layer configures it.
+  // Defer to the architect: pin a default only when no env var or settings layer configures it.
   if (recap && !recap.isConfigured(pi.pi.settings)) recap.override(pi.pi.settings, false);
 }
 ```
 
 - `override(scope, value)` writes the in-memory runtime layer; it is never persisted and outranks project, global, and `--config` layers. A setting's environment binding normally takes precedence; definitions using `envFallback` instead defer to configured settings. A value the definition rejects throws, e.g. `Invalid value for recap.enabled: "nope" (expected a boolean)`.
 - `clearOverride(scope)` releases the override, restoring the persisted/default value.
-- `isConfigured(scope)` / `provenance(scope)` tell a user-configured value from the default (`"env" | "runtime" | "overlay" | "project" | "global" | "default"`).
+- `isConfigured(scope)` / `provenance(scope)` tell an architect-configured value from the default (`"env" | "runtime" | "overlay" | "project" | "global" | "default"`).
 - `get(scope)` reads the effective value; `listen(scope, cb)` observes changes. Writes go through the settings store, so change listeners and live effects fire.
 - `lookup` returns `undefined` for an unknown id.
 
@@ -418,7 +418,7 @@ Cancelable pre-events:
 - `session_before_compact` → `{ cancel?: boolean; compaction?: CompactionResult }`
 - `session_before_tree` → `{ cancel?: boolean; summary?: { summary: string; details?: unknown } }`
 
-`session_before_branch` and `session_branch` carry `reason`, which decides what `session_before_branch.entryId` means. For `"branch"` (`branch(entryId)`, `/branch`) it is the user message being rewound: it and everything after it are dropped. For `"fork"` (`AgentSession.fork(entryId)`, RPC `fork` with an `entryId`) and `"btw"` (`/btw` promotion) it is the last entry kept in the new session.
+`session_before_branch` and `session_branch` carry `reason`, which decides what `session_before_branch.entryId` means. For `"branch"` (`branch(entryId)`, `/branch`) it is the architect message being rewound: it and everything after it are dropped. For `"fork"` (`AgentSession.fork(entryId)`, RPC `fork` with an `entryId`) and `"btw"` (`/btw` promotion) it is the last entry kept in the new session.
 
 ### Prompt and turn lifecycle
 
@@ -448,7 +448,7 @@ For queued batches, `prompt` contains the already-transformed text of every sele
 
 Handlers chain from the current base system prompt. Their final override governs the next provider request and its continuations until another prompt or user-containing batch prepares policy. Overrides remain complete replacements, including strings or arrays unrelated to the base; the host never infers or rebases text patches. Returned custom messages are appended once after the original batch; originals retain their order, identity, attribution, and metadata. Host application of results is cancelled if the turn is aborted or the session or queue ownership changes while handlers are pending.
 
-If a returned override's source base changes during preparation (for example, a handler awaits `pi.setActiveTools()`), the host discards that attempt's returned custom messages and staged memory, then repeats policy preparation from the winning base. At most three attempts run per delivery; repeated base changes raise an error without delivering the original input. Queued originals remain queued, and settling the failed turn does not retry them automatically. A new prompt or queued delivery can reopen draining, including synthetic follow-ups and custom messages from extensions or advisors; the pause is not restricted to a user-only retry. Ordinary text is returned through the dropped-prompt callback. Unchanged base content does not trigger a retry, even if a refresh replaces the array. Preparations without an override still use the winning base without rerunning handlers or recall. Ownership is checked again synchronously before publishing results; a late change declines the delivery without committing memory or context.
+If a returned override's source base changes during preparation (for example, a handler awaits `pi.setActiveTools()`), the host discards that attempt's returned custom messages and staged memory, then repeats policy preparation from the winning base. At most three attempts run per delivery; repeated base changes raise an error without delivering the original input. Queued originals remain queued, and settling the failed turn does not retry them automatically. A new prompt or queued delivery can reopen draining, including synthetic follow-ups and custom messages from extensions or advisors; the pause is not restricted to an architect-only retry. Ordinary text is returned through the dropped-prompt callback. Unchanged base content does not trigger a retry, even if a refresh replaces the array. Preparations without an override still use the winning base without rerunning handlers or recall. Ownership is checked again synchronously before publishing results; a late change declines the delivery without committing memory or context.
 
 Handlers must tolerate re-entry: a source-base retry can call the entire `before_agent_start` chain again for the same submission, and a cancelled delivery may be prepared again when resumed. Only the accepted attempt's returned context and staged memory are published; external side effects performed by handlers cannot be rolled back. Input hooks, commands, templates, and original attachment preprocessing are never replayed by these policy retries.
 
@@ -472,7 +472,7 @@ and `images: []` removes attachments. Replacement text is trimmed before dispatc
 no remaining images also stops normal dispatch. Work explicitly scheduled by a
 handler through `sendUserMessage` or `sendMessage` is not discarded.
 
-This is an ingress event, not a user-role message event. Queue delivery and replay
+This is an ingress event, not an architect-role message event. Queue delivery and replay
 do not emit it again. Programmatic `sendUserMessage`/`sendMessage` calls and
 synthetic continuations do not automatically emit `input`. Main-session Enter's
 `.`/`c` continuation shortcuts retain their synthetic path. Focused-subagent
