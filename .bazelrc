@@ -109,3 +109,11 @@ build:cache-ro --remote_timeout=60s
 # --- Local development ---------------------------------------------------------
 # Optional user overrides (remote cache endpoint, disk cache, etc.).
 try-import %workspace%/.bazelrc.user
+
+# --- Local NativeLink default (estate, mirrors tau 2026-10-19) ---
+# NativeLink REAPI cache on the forge frontend port (config/ports.env SSOT).
+build --remote_cache=grpc://127.0.0.1:25155
+build --remote_upload_local_results=true
+build --remote_local_fallback
+build --remote_retries=2
+build --remote_timeout=60s
