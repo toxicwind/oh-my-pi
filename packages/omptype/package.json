@@ -32,6 +32,8 @@
     "bench": "bun bench/bench.ts"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.4",
+    "bun-types": "^1.4.4",
     "@ark/attest": "0.56.3",
     "@ark/schema": "0.56.2",
     "@ark/util": "0.56.2",

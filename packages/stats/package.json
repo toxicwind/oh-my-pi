@@ -50,6 +50,8 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.4",
+    "bun-types": "^1.4.4",
     "@types/bun": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:"

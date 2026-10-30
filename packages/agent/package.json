@@ -44,6 +44,8 @@
     "@opentelemetry/api": "catalog:"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.4",
+    "bun-types": "^1.4.4",
     "@oh-my-pi/omptype": "catalog:",
     "@opentelemetry/context-async-hooks": "catalog:",
     "@opentelemetry/sdk-trace-base": "catalog:",

@@ -562,6 +562,8 @@
 		"puppeteer-core": "catalog:"
 	},
 	"devDependencies": {
+    "@types/bun": "^1.4.4",
+    "bun-types": "^1.4.4",
 		"@types/bun": "catalog:"
 	},
 	"optionalDependencies": {
