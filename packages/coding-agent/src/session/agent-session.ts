@@ -535,7 +535,7 @@ const TITLE_DRIFT_JUDGE_TIMEOUT_MS = 15_000;
 import { LoopGuards, type StreamGuardsHost, StreamingEditGuard } from "./stream-guards";
 import { EAGER_TODO_PRELUDE_MESSAGE_TYPE, TodoTracker, type TodoTrackerHost } from "./todo-tracker";
 import { TtsrCoordinator, type TtsrCoordinatorHost } from "./ttsr-coordinator";
-import { createEnforcementRuntime, type EnforcementRuntime } from "./enforcement-runtime";
+import { createEnforcementRuntime, formatViolationNotice, type EnforcementRuntime } from "./enforcement-runtime";
 import { createObligationLedgerMirror } from "./obligation-ledger-mirror";
 import { createLiveSymbolResolver } from "../lsp/live-symbol-resolver";
 /** Tools whose result is source code, and so can carry an AST fingerprint. */
@@ -1177,6 +1177,14 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 	 * blocks a tool call. It is the completion gate, not this, that refuses.
 	 */
 	readonly #enforcement: EnforcementRuntime;
+	/**
+	 * Enforcement notices awaiting delivery on the next tool result.
+	 *
+	 * Keyed by tool call id, the same channel TTSR uses for its rule
+	 * reminders: the notice rides on the tool result, so the agent sees it in
+	 * the turn it happened in rather than in a later one.
+	 */
+	readonly #enforcementNotices = new Map<string, string>();
 	readonly #modelMentions: ModelMentionRegistry;
 	#workPoolYieldItems: readonly WorkPoolYieldItem[] = [];
 	/** Item set matching the last successfully rebuilt provider prompt. The base
@@ -5790,7 +5798,17 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 			this.#synchronouslyTerminatedYieldToolCallIds.add(ctx.toolCall.id);
 			this.agent.abort(TERMINAL_TOOL_RESULT_ABORT_REASON);
 		}
-		return this.#ttsr.afterToolCall(ctx);
+		const ttsrResult = this.#ttsr.afterToolCall(ctx);
+		// The enforcement notice rides on the tool result, after TTSR's own
+		// reminder: TTSR's rules are the host's, the enforcement notice is
+		// the human's, and the human's correction is the one that should be
+		// read last.
+		const enforcementResult = this.#deliverEnforcementNotice(ctx.toolCall.id, ctx.result);
+		if (!enforcementResult) return ttsrResult;
+		return {
+			...ttsrResult,
+			content: enforcementResult.content,
+		};
 	}
 	/**
 	 * Emits the extension `tool_call` event for a loop-dispatched call at
@@ -5802,6 +5820,23 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 	 * emit a second event (nested xd:// device dispatches and direct non-loop
 	 * execution still emit there).
 	 */
+	/**
+	 * Delivers a pending enforcement notice on a tool result.
+	 *
+	 * Returns the rewritten result, or undefined when there is no notice. The
+	 * notice is prepended as a leading text block, so it is the first thing
+	 * the model reads after the tool's output.
+	 */
+	#deliverEnforcementNotice(
+		toolCallId: string,
+		result: AgentToolResult,
+	): { content: (TextContent | ImageContent)[] } | undefined {
+		const notice = this.#enforcementNotices.get(toolCallId);
+		if (!notice) return undefined;
+		this.#enforcementNotices.delete(toolCallId);
+		return { content: [{ type: "text", text: notice }, ...result.content] };
+	}
+
 	/**
 	 * Reads the files a tool call touched, for the novelty fingerprint.
 	 *
@@ -5833,7 +5868,24 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 		// (a re-violation is recorded, never blocked — blocking on a heuristic
 		// would be a behaviour patch, not a contract), and the call is charged
 		// against the budget governor.
-		await this.#enforcement.checkToolCall(ctx.tool.name, ctx.args);
+		const violations = await this.#enforcement.checkToolCall(ctx.tool.name, ctx.args);
+		if (violations.length > 0) {
+			// The agent has to be *told*, not merely recorded. A record the
+			// agent cannot see is a note in a file nobody reads.
+			const notice = violations
+				.map(violation =>
+					formatViolationNotice({
+						obligationId: violation.obligation.id,
+						kind: violation.obligation.kind,
+						subject: violation.obligation.subject,
+						raw: violation.obligation.raw,
+						evidence: violation.evidence,
+						engine: violation.engine,
+					}),
+				)
+				.join("\n");
+			this.#enforcementNotices.set(ctx.toolCall.id, notice);
+		}
 		// The novelty is measured from the parse tree of the files the action
 		// touched, so the governor sees structure rather than paths.
 		const touched = await this.#readTouchedFiles(ctx.tool.name, ctx.args);

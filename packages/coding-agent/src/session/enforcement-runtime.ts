@@ -49,6 +49,39 @@ export interface RecordedViolation {
 	readonly at: number;
 }
 
+/**
+ * A re-violation, in the shape the notice formatter consumes.
+ *
+ * Separate from {@link RecordedViolation} because the recorded form carries
+ * the moment and the tool it came from; the notice carries only what the
+ * agent needs to be told.
+ */
+export interface ViolationNotice {
+	readonly obligationId: string;
+	readonly kind: string;
+	readonly subject: string;
+	/** The human's original words. */
+	readonly raw: string;
+	/** What was observed. */
+	readonly evidence: string;
+	/** Which engine detected it. */
+	readonly engine: string;
+}
+
+/**
+ * Formats a re-violation as a single-line notice.
+ *
+ * Single-line because it rides on a tool result: a multi-line notice would
+ * break the one-line summary the TUI renders for a tool call.
+ */
+export function formatViolationNotice(violation: ViolationNotice): string {
+	return (
+		`OBLIGATION_VIOLATION [${violation.obligationId}]: the human said "${violation.raw}" — ` +
+		`${violation.evidence} (detected by ${violation.engine}). Use the permitted method instead, ` +
+		`or explain why the obligation no longer applies.`
+	);
+}
+
 /** A plain-data snapshot of the whole runtime. */
 export interface EnforcementSnapshot {
 	readonly obligations: readonly ObligationSnapshotEntry[];
