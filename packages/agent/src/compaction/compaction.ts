@@ -34,6 +34,8 @@ import { isSurvivingAssistant } from "@oh-my-pi/pi-ai/providers/transform-messag
 import { stripOpenAIResponsesOutputOnlyStatusesForReplay } from "@oh-my-pi/pi-ai/utils";
 import { resolveCatalogPolicy } from "@oh-my-pi/pi-catalog/compat/catalog-policy";
 import { preferredDialect } from "@oh-my-pi/pi-catalog/identity";
+import { isTransientSummarizationFailure } from "./fallback-chain";
+import { buildStructuralDigest } from "./structural-digest";
 import { clampThinkingLevelForModel } from "@oh-my-pi/pi-catalog/model-thinking";
 import { isRecord, logger, prompt } from "@oh-my-pi/pi-utils";
 import * as snapcompact from "@oh-my-pi/snapcompact";
@@ -689,6 +691,24 @@ function shouldRetryHandoffWithAutoToolChoice(response: AssistantMessage): boole
  * If previousSummary is provided, uses the update prompt to merge.
  */
 export interface SummaryOptions {
+	/**
+	 * A model-free structural digest used as the last resort when the
+	 * summarizer cannot be reached (rate limit, quota exhausted).
+	 *
+	 * When present, a transient summarizer failure yields the digest instead
+	 * of aborting the compaction. A lossy summary beats a dead session.
+	 */
+	structuralDigest?: string;
+	/**
+	 * Where the obligation ledger lives, so the digest can carry the rules
+	 * forward instead of losing them in a lossy summary.
+	 */
+	obligationLedgerReference?: { readonly path: string; readonly digest: string };
+	/** The todo state at compaction time, carried into the digest. */
+	todoPhases?: readonly {
+		readonly name: string;
+		readonly tasks: readonly { readonly content: string; readonly status: string }[];
+	}[];
 	promptOverride?: string;
 	extraContext?: string[];
 	remoteEndpoint?: string;
@@ -960,6 +980,24 @@ export async function generateSummary(
 				options,
 			);
 		} catch (error) {
+			// The last tier of the fallback chain: a model-free digest.
+			//
+			// The oneshot retry budget above retries a transient failure against
+			// the *same* model, which cannot help when the provider is
+			// hard-limited. The observed death was six identical
+			// `Too Many Requests` errors and a session that could not be
+			// resumed at all. A digest cannot be rate-limited.
+			//
+			// Only a rate-limit / quota failure takes this path: a context
+			// overflow still re-plans below, and any other error is a real
+			// problem that must surface.
+			if (options?.structuralDigest !== undefined && isTransientSummarizationFailure(error)) {
+				logger.warn("Compaction summarizer unavailable; using the structural digest", {
+					model: model.id,
+					error: error instanceof Error ? error.message : String(error),
+				});
+				return options.structuralDigest;
+			}
 			// The catalog window can overstate what the provider actually accepts:
 			// `claude-sonnet-4-5` advertises 1M but is beta-gated to 200k on OAuth
 			// credentials (see `anthropic.ts` — the 1M beta is never advertised).
@@ -1780,6 +1818,13 @@ export async function compact(
 		// The caller's opt-out must reach every summarization oneshot, otherwise
 		// an outer retry loop multiplies with the inner one (see SummaryOptions).
 		oneshotRetry: options?.oneshotRetry,
+		// The model-free last resort. Built from the messages that are about to
+		// be summarized, so a summarizer that cannot be reached still yields a
+		// resumable session instead of a dead one.
+		structuralDigest: buildStructuralDigest(messagesToSummarize, {
+			ledgerReference: options?.obligationLedgerReference,
+			todoPhases: options?.todoPhases,
+		}),
 	};
 
 	// An archive keeps the reasoning policy of the model it was rendered for;
