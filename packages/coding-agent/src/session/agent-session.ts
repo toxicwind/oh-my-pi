@@ -538,6 +538,12 @@ import { TtsrCoordinator, type TtsrCoordinatorHost } from "./ttsr-coordinator";
 import { createEnforcementRuntime, type EnforcementRuntime } from "./enforcement-runtime";
 import { createObligationLedgerMirror } from "./obligation-ledger-mirror";
 import { createLiveSymbolResolver } from "../lsp/live-symbol-resolver";
+/** Tools whose result is source code, and so can carry an AST fingerprint. */
+const FILE_TOOLS = new Set(["read", "edit", "write", "ast_edit", "ast_grep"]);
+
+import { readFile } from "node:fs/promises";
+import { resolveToCwd } from "../tools/path-utils";
+import { detectLanguageId } from "../lsp/utils";
 import type { ObligationSnapshotEntry } from "@oh-my-pi/pi-agent-core/obligation-ledger";
 
 import { cfgAdvisorEnabled, cfgAdvisorMaxNotesPerUpdate } from "../advisor/settings";
@@ -5796,6 +5802,30 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 	 * emit a second event (nested xd:// device dispatches and direct non-loop
 	 * execution still emit there).
 	 */
+	/**
+	 * Reads the files a tool call touched, for the novelty fingerprint.
+	 *
+	 * Only the tools whose *result* is source code count: a read of a
+	 * document, an edit, an AST edit, or a write. A bash call is not read
+	 * here — the fingerprint of what a command produced is not knowable
+	 * before it runs.
+	 */
+	async #readTouchedFiles(
+		toolName: string,
+		args: Readonly<Record<string, unknown>>,
+	): Promise<Array<{ path: string; source: string; lang: string }>> {
+		const path = args.path ?? args.file ?? args.filePath ?? args.file_path;
+		if (typeof path !== "string" || path.length === 0) return [];
+		if (!FILE_TOOLS.has(toolName)) return [];
+		try {
+			const absolute = resolveToCwd(path, this.sessionManager.getCwd());
+			const source = await readFile(absolute, "utf8");
+			return [{ path: absolute, source, lang: detectLanguageId(absolute) }];
+		} catch {
+			return [];
+		}
+	}
+
 	async #beforeToolCall(ctx: BeforeToolCallContext, signal?: AbortSignal): Promise<BeforeToolCallResult | undefined> {
 		const runner = this.#extensionRunner;
 		runner?.markLoopToolCall?.(ctx.toolCall.id, ctx.tool.name);
@@ -5804,7 +5834,14 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 		// would be a behaviour patch, not a contract), and the call is charged
 		// against the budget governor.
 		await this.#enforcement.checkToolCall(ctx.tool.name, ctx.args);
-		this.#enforcement.chargeBudget(ctx.tool.name);
+		// The novelty is measured from the parse tree of the files the action
+		// touched, so the governor sees structure rather than paths.
+		const touched = await this.#readTouchedFiles(ctx.tool.name, ctx.args);
+		if (touched.length > 0) {
+			await this.#enforcement.chargeBudgetForFiles(ctx.tool.name, touched);
+		} else {
+			this.#enforcement.chargeBudget(ctx.tool.name);
+		}
 		const ttsrResult = await this.#ttsr.beforeToolCall(ctx);
 		if (ttsrResult) {
 			runner?.clearLoopToolCall?.(ctx.toolCall.id, ctx.tool.name);

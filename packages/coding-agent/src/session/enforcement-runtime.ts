@@ -36,6 +36,7 @@ import {
 	type NoveltySignal,
 } from "@oh-my-pi/pi-agent-core/budget-governor";
 import type { ObligationLedgerMirror } from "./obligation-ledger-mirror";
+import { buildAstFingerprints } from "@oh-my-pi/pi-agent-core/ast-novelty";
 
 /** A recorded re-violation. */
 export interface RecordedViolation {
@@ -79,6 +80,18 @@ export interface EnforcementRuntime {
 	checkToolCall(toolName: string, args: Readonly<Record<string, unknown>>): Promise<ObligationViolation[]>;
 	/** Charges the budget governor. */
 	chargeBudget(toolName: string, novelty?: NoveltySignal): BudgetVerdict;
+	/**
+	 * Charges the budget governor with fingerprints derived from the AST of
+	 * the files the action touched.
+	 *
+	 * This is the honest novelty signal: the fingerprint is the *shape* of
+	 * the code, so re-reading the same structure under a new name is
+	 * correctly scored as no novelty.
+	 */
+	chargeBudgetForFiles(
+		toolName: string,
+		files: ReadonlyArray<{ path: string; source: string; lang: string }>,
+	): Promise<BudgetVerdict>;
 	/** The intent frames seen so far. */
 	frames(): readonly IntentFrame[];
 	/** The re-violations recorded so far. */
@@ -216,6 +229,17 @@ export function createEnforcementRuntime(options: EnforcementRuntimeOptions = {}
 		chargeBudget(toolName: string, novelty?: NoveltySignal): BudgetVerdict {
 			const action: BudgetAction = novelty ? { toolCall: toolName, novelty } : { toolCall: toolName };
 			return governor.evaluate(action);
+		},
+
+		async chargeBudgetForFiles(
+			toolName: string,
+			files: ReadonlyArray<{ path: string; source: string; lang: string }>,
+		): Promise<BudgetVerdict> {
+			// The fingerprint comes from the parse tree, so it measures whether
+			// the *shape* of the ground changed — not whether a path was read
+			// again.
+			const fingerprints = await buildAstFingerprints(files);
+			return governor.evaluate({ toolCall: toolName, novelty: { astFingerprints: fingerprints, evidenceIds: [] } });
 		},
 
 		frames(): readonly IntentFrame[] {
