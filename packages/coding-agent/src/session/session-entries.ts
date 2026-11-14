@@ -22,6 +22,61 @@ export const SESSION_TITLE_SLOT_ENTRY_TYPE = "title";
 
 export const TITLE_CHANGE_ENTRY_TYPE = "title_change";
 
+/**
+ * Entry type for a human correction compiled into a machine-checkable
+ * obligation.
+ *
+ * A correction is a chat turn and chat turns are forgotten: the agent
+ * acknowledges it, then ten minutes later does the same thing again. This
+ * entry makes the correction *state* — it survives restart, it rehydrates
+ * with the branch, and it carries the obligation id that the ledger indexes.
+ */
+export const CORRECTION_ENTRY_TYPE = "correction";
+
+/** Kinds of obligation a correction can compile into. */
+export type CorrectionObligationKind = "method" | "scope" | "artifact" | "symbol" | "assertion";
+
+/** Lifecycle state of a correction obligation. */
+export type CorrectionObligationState = "active" | "satisfied" | "superseded";
+
+/** A compiled human correction, persisted as a session entry. */
+export interface CorrectionEntry extends SessionEntryBase {
+	type: typeof CORRECTION_ENTRY_TYPE;
+	/** Stable obligation id (kind + subject), so recompiling is idempotent. */
+	obligationId: string;
+	kind: CorrectionObligationKind;
+	/** The prohibited or required subject: a program, a scope, a symbol. */
+	subject: string;
+	/** The human's original words, kept for the judge path and the report. */
+	raw: string;
+	state: CorrectionObligationState;
+	/** Turn index the correction was given at. */
+	turn?: number;
+}
+
+const CORRECTION_OBLIGATION_KINDS: readonly CorrectionObligationKind[] = [
+	"method",
+	"scope",
+	"artifact",
+	"symbol",
+	"assertion",
+];
+
+const CORRECTION_OBLIGATION_STATES: readonly CorrectionObligationState[] = ["active", "satisfied", "superseded"];
+
+/** True when the entry is a well-formed correction entry. */
+export function isCorrectionEntry(entry: unknown): entry is CorrectionEntry {
+	if (typeof entry !== "object" || entry === null) return false;
+	const candidate = entry as Partial<CorrectionEntry>;
+	if (candidate.type !== CORRECTION_ENTRY_TYPE) return false;
+	if (typeof candidate.obligationId !== "string" || candidate.obligationId.length === 0) return false;
+	if (typeof candidate.subject !== "string" || candidate.subject.length === 0) return false;
+	if (typeof candidate.raw !== "string") return false;
+	if (!CORRECTION_OBLIGATION_KINDS.includes(candidate.kind as CorrectionObligationKind)) return false;
+	if (!CORRECTION_OBLIGATION_STATES.includes(candidate.state as CorrectionObligationState)) return false;
+	return true;
+}
+
 export type SessionTitleSource = "auto" | "user";
 
 /** Fixed-width first-line slot carrying the mutable current session title. */
@@ -245,6 +300,7 @@ declare module "@oh-my-pi/pi-agent-core/compaction/entries" {
 		titleChange: TitleChangeEntry;
 		credentialPin: CredentialPinEntry;
 		modelUsage: ModelUsageEntry;
+		correction: CorrectionEntry;
 	}
 }
 
@@ -360,6 +416,7 @@ export type SessionEntry =
 	| ServiceTierChangeEntry
 	| CompactionEntry
 	| BranchSummaryEntry
+	| CorrectionEntry
 	| CustomEntry
 	| CustomMessageEntry
 	| LabelEntry

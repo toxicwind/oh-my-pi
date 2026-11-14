@@ -485,7 +485,14 @@ import {
 	type SessionDumpLiveState,
 } from "./session-dump-format";
 import { collectSubSessions, type SubSession } from "./sub-sessions";
-import type { BranchSummaryEntry, NewSessionOptions, SessionEntry } from "./session-entries";
+import {
+	CORRECTION_ENTRY_TYPE,
+	isCorrectionEntry,
+	type BranchSummaryEntry,
+	type CorrectionEntry,
+	type NewSessionOptions,
+	type SessionEntry,
+} from "./session-entries";
 import { SessionHandoff, type SessionHandoffHost } from "./session-handoff";
 import {
 	COMPACTION_CHECK_NONE,
@@ -528,6 +535,8 @@ const TITLE_DRIFT_JUDGE_TIMEOUT_MS = 15_000;
 import { LoopGuards, type StreamGuardsHost, StreamingEditGuard } from "./stream-guards";
 import { EAGER_TODO_PRELUDE_MESSAGE_TYPE, TodoTracker, type TodoTrackerHost } from "./todo-tracker";
 import { TtsrCoordinator, type TtsrCoordinatorHost } from "./ttsr-coordinator";
+import { createEnforcementRuntime, type EnforcementRuntime } from "./enforcement-runtime";
+import type { ObligationSnapshotEntry } from "@oh-my-pi/pi-agent-core/obligation-ledger";
 
 import { cfgAdvisorEnabled, cfgAdvisorMaxNotesPerUpdate } from "../advisor/settings";
 import { cfgBrowserEnabled, cfgBrowserFreezeOnTurnEnd, cfgBrowserIdleCloseSec } from "../tools/browser/settings";
@@ -1151,6 +1160,15 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 	#planModeReminderCount = 0;
 	#planModeReminderAwaitingProgress = false;
 	readonly #todo: TodoTracker;
+	/**
+	 * Cross-turn enforcement state: the intent frames of the human's turns, the
+	 * obligations compiled from their corrections, and the budget governor.
+	 *
+	 * The runtime is deliberately *observational* — it records what was asked,
+	 * what was forbidden, and whether the budget still buys novelty — and never
+	 * blocks a tool call. It is the completion gate, not this, that refuses.
+	 */
+	readonly #enforcement: EnforcementRuntime;
 	readonly #modelMentions: ModelMentionRegistry;
 	#workPoolYieldItems: readonly WorkPoolYieldItem[] = [];
 	/** Item set matching the last successfully rebuilt provider prompt. The base
@@ -2258,6 +2276,25 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 			consumeLastServedToolChoiceLabel: () => this.#toolChoiceQueue.consumeLastServedLabel(),
 		};
 		this.#todo = new TodoTracker(todoHost);
+		// The enforcement runtime starts empty and is rehydrated from the
+		// session's correction entries, so a restart does not forget a rule the
+		// human gave an hour ago.
+		this.#enforcement = createEnforcementRuntime();
+		this.#enforcement.rehydrate({
+			obligations: this.sessionManager
+				.getBranch()
+				.filter((entry): entry is CorrectionEntry => isCorrectionEntry(entry))
+				.map((entry): ObligationSnapshotEntry => ({
+					id: entry.obligationId,
+					kind: entry.kind,
+					subject: entry.subject,
+					raw: entry.raw,
+					state: entry.state,
+					createdAtTurn: entry.turn,
+				})),
+			violations: [],
+			frames: [],
+		});
 		this.#modelMentions = new ModelMentionRegistry({
 			sessionManager: this.sessionManager,
 			modelRegistry: this.#modelRegistry,
@@ -5747,6 +5784,12 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 	async #beforeToolCall(ctx: BeforeToolCallContext, signal?: AbortSignal): Promise<BeforeToolCallResult | undefined> {
 		const runner = this.#extensionRunner;
 		runner?.markLoopToolCall?.(ctx.toolCall.id, ctx.tool.name);
+		// Enforcement observes every tool call: an active obligation is checked
+		// (a re-violation is recorded, never blocked — blocking on a heuristic
+		// would be a behaviour patch, not a contract), and the call is charged
+		// against the budget governor.
+		await this.#enforcement.checkToolCall(ctx.tool.name, ctx.args);
+		this.#enforcement.chargeBudget(ctx.tool.name);
 		const ttsrResult = await this.#ttsr.beforeToolCall(ctx);
 		if (ttsrResult) {
 			runner?.clearLoopToolCall?.(ctx.toolCall.id, ctx.tool.name);
@@ -8561,6 +8604,23 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 
 		// Agent-initiated synthetic prompts (auto-continue, plan, reminders) are not user turns.
 		if (options?.userInitiated ?? !options?.synthetic) this.#noteUserTurn();
+
+		// Enforcement sees the human's turn, not the agent's synthetic ones. A
+		// correction here becomes a persisted obligation; every turn becomes an
+		// intent frame so the record of "what was asked" is machine-readable.
+		if (!(options?.synthetic ?? false)) {
+			this.#enforcement.observeTurn(expandedText);
+			const correction = this.#enforcement.observeCorrection(expandedText);
+			if (correction) {
+				this.sessionManager.appendCustomEntry(CORRECTION_ENTRY_TYPE, {
+					obligationId: correction.id,
+					kind: correction.kind,
+					subject: correction.subject,
+					raw: correction.raw,
+					state: correction.state,
+				});
+			}
+		}
 
 		const promptAttribution = options?.attribution ?? (options?.synthetic ? "agent" : "user");
 

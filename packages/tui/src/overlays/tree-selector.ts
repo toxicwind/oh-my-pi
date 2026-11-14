@@ -40,6 +40,7 @@ export type SessionTreeEntry = { id: string; parentId: string | null } & (
 	| { type: "mode_change"; mode: string }
 	| { type: "credential_pin"; provider: string }
 	| { type: "ttsr_injection"; injectedRules: string[] }
+	| { type: "correction"; obligationId: string; kind: string; subject: string; raw: string }
 	| { type: "session_init" | "reset_boundary" }
 );
 
