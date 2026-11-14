@@ -35,6 +35,7 @@ import {
 	createBudgetGovernor,
 	type NoveltySignal,
 } from "@oh-my-pi/pi-agent-core/budget-governor";
+import type { ObligationLedgerMirror } from "./obligation-ledger-mirror";
 
 /** A recorded re-violation. */
 export interface RecordedViolation {
@@ -95,6 +96,13 @@ export interface EnforcementRuntimeOptions {
 	readonly maxToolCalls?: number;
 	/** Clock injection for deterministic tests. */
 	readonly now?: () => number;
+	/**
+	 * Durable mirror for the ledger.
+	 *
+	 * When present, every correction is written to disk immediately, so a
+	 * session that dies mid-compaction still leaves a readable plan behind.
+	 */
+	readonly mirror?: ObligationLedgerMirror;
 }
 
 /** Tools whose arguments carry a shell command. */
@@ -147,7 +155,17 @@ export function createEnforcementRuntime(options: EnforcementRuntimeOptions = {}
 
 		observeCorrection(text: string): Obligation | undefined {
 			const obligation: Obligation | undefined = compileObligation(text);
-			if (obligation) ledger.record(obligation);
+			if (obligation) {
+				ledger.record(obligation);
+				// The mirror is written on every correction, not on shutdown:
+				// the session may never get to shut down cleanly.
+				try {
+					options.mirror?.write(ledger.snapshot());
+				} catch {
+					// A mirror that cannot be written is a lost durability
+					// guarantee, not a reason to fail the turn.
+				}
+			}
 			return obligation;
 		},
 

@@ -202,6 +202,8 @@ import {
 } from "./session/auth-broker-config";
 import type { AuthStorage } from "./session/auth-storage";
 import { CostCapError, type CostGateApi, guardStreamFn } from "./session/cost-gate";
+import type { GitProofProvider } from "./session/completion-gate";
+import { createGitProofProviderForDir } from "./session/git-proof-provider";
 import {
 	CREDENTIAL_DISABLED_NOTICE_SOURCE,
 	formatCredentialDisabledNotice,
@@ -2562,6 +2564,8 @@ async function createAgentSessionScoped(options: CreateAgentSessionOptions): Pro
 		// entries capture it at fetch time and are dropped at injection if a newer
 		// mutation (any tool) bumped it in the meantime.
 		const fileMutationVersions = new Map<string, number>();
+		/** Lazily-created git state for the completion gate. */
+		let gitProofProvider: GitProofProvider | undefined;
 		const disposeCallbacks = new Set<() => void>();
 		const activeToolNames = new Set<string>();
 		const toolRegistry = new Map<string, Tool & Pick<ToolDefinition, "defaultInactive">>();
@@ -2703,6 +2707,11 @@ async function createAgentSessionScoped(options: CreateAgentSessionOptions): Pro
 			getTodoPhases: () => session.getTodoPhases(),
 			setTodoPhases: phases => session.setTodoPhases(phases),
 			commitTodoPhases: phases => session.commitTodoPhases(phases),
+			// The completion gate needs git truth to decide whether a task may
+			// be marked done. The provider is created lazily and cached per
+			// session; a session outside a git repository gets none, and the
+			// gate then proves nothing rather than refusing spuriously.
+			getGitProofProvider: () => (gitProofProvider ??= createGitProofProviderForDir(sessionManager.getCwd())),
 			getWorkPoolYieldItems: () => session?.getWorkPoolYieldItems() ?? [],
 			getLastAssistantText: () => session?.getLastAssistantText(),
 			getYieldReportText: toolCallId => resolveYieldReportText(session?.messages ?? [], toolCallId),

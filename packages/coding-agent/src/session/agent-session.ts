@@ -536,6 +536,7 @@ import { LoopGuards, type StreamGuardsHost, StreamingEditGuard } from "./stream-
 import { EAGER_TODO_PRELUDE_MESSAGE_TYPE, TodoTracker, type TodoTrackerHost } from "./todo-tracker";
 import { TtsrCoordinator, type TtsrCoordinatorHost } from "./ttsr-coordinator";
 import { createEnforcementRuntime, type EnforcementRuntime } from "./enforcement-runtime";
+import { createObligationLedgerMirror } from "./obligation-ledger-mirror";
 import type { ObligationSnapshotEntry } from "@oh-my-pi/pi-agent-core/obligation-ledger";
 
 import { cfgAdvisorEnabled, cfgAdvisorMaxNotesPerUpdate } from "../advisor/settings";
@@ -2279,7 +2280,13 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 		// The enforcement runtime starts empty and is rehydrated from the
 		// session's correction entries, so a restart does not forget a rule the
 		// human gave an hour ago.
-		this.#enforcement = createEnforcementRuntime();
+		// The ledger is mirrored beside the session file so a session that dies
+		// mid-compaction still leaves a readable plan on disk.
+		const sessionFilePath = this.sessionManager.getSessionFile();
+		const ledgerDir = sessionFilePath ? sessionFilePath.replace(/\.jsonl?$/, "").concat(".obligations") : undefined;
+		this.#enforcement = createEnforcementRuntime({
+			mirror: ledgerDir ? createObligationLedgerMirror(ledgerDir) : undefined,
+		});
 		this.#enforcement.rehydrate({
 			obligations: this.sessionManager
 				.getBranch()

@@ -8,6 +8,7 @@ import type { EffectiveExtensionRoots } from "../capability/types";
 import type { EvalPreludeDefinition } from "../eval/preludes";
 import type { PromptTemplate } from "../config/prompt-templates";
 import type { Settings } from "../config/settings";
+import type { GitProofProvider } from "../session/completion-gate";
 import { EditTool } from "../edit";
 import { checkPythonKernelAvailability } from "../eval/py/kernel";
 import type { ToolPathWithSource } from "../extensibility/custom-tools";
@@ -489,6 +490,15 @@ export interface ToolSession {
 	 * use this so branch rehydration agrees with the in-memory list.
 	 */
 	commitTodoPhases?: (phases: TodoPhase[]) => void;
+	/**
+	 * Git state for the completion gate.
+	 *
+	 * The `todo` tool asks it whether the artifacts a task names are tracked
+	 * by git, so a task cannot be marked done over uncommitted work. Absent
+	 * when the session is not in a git repository — the gate then proves
+	 * nothing and refuses to invent a requirement.
+	 */
+	getGitProofProvider?: () => GitProofProvider | undefined;
 	/** Active workpool items whose incremental yields complete the current turn. */
 	getWorkPoolYieldItems?: () => readonly WorkPoolYieldItem[];
 	/**

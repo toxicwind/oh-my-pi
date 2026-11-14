@@ -18,11 +18,25 @@
 
 /** Reads the git state the gate needs. Injected so the gate stays testable. */
 export interface GitProofProvider {
+	/**
+	 * Loads the repository state the provider answers from.
+	 *
+	 * Required because the git state is read asynchronously while
+	 * {@link GitProofProvider.isTracked} is a synchronous decision: the gate
+	 * awaits this before it asks anything. A provider with no `prepare` is
+	 * assumed to already hold its state (a stub, or an in-memory fixture).
+	 */
+	prepare?(): Promise<void>;
 	/** True when the path is tracked by git at HEAD. */
 	isTracked(path: string): boolean;
 	/** Paths git reports as untracked. */
 	untrackedPaths(): readonly string[];
-	/** The current HEAD sha, or undefined when there is no commit yet. */
+	/**
+	 * The current HEAD sha, or undefined when there is no commit yet.
+	 *
+	 * Synchronous because the gate reads it after `prepare()` has loaded the
+	 * repository state; the provider caches the value it read.
+	 */
 	headSha(): string | undefined;
 }
 
@@ -99,6 +113,19 @@ export function createCompletionGate(options: CompletionGateOptions): Completion
 			const proofs: CompletionProof[] = [];
 			const failures: CompletionFailure[] = [];
 
+			// The git state is read asynchronously; the decision is not. Load it
+			// before asking anything about it.
+			try {
+				await options.git.prepare?.();
+			} catch (error) {
+				failures.push({
+					path: request.artifacts[0] ?? "",
+					reason: `git state unavailable: ${error instanceof Error ? error.message : String(error)}`,
+					engine: "git",
+				});
+				return { ok: false, proofs, failures };
+			}
+
 			const headSha = options.git.headSha();
 			if (request.artifacts.length > 0 && headSha === undefined) {
 				failures.push({
@@ -113,7 +140,7 @@ export function createCompletionGate(options: CompletionGateOptions): Completion
 				if (!options.git.isTracked(artifact)) {
 					failures.push({
 						path: artifact,
-						reason: `artifact is not tracked by git (uncommitted work cannot be certified as done)`,
+						reason: "artifact is not tracked by git (uncommitted work cannot be certified as done)",
 						engine: "git",
 					});
 					continue;

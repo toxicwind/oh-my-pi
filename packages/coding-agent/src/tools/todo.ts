@@ -16,6 +16,7 @@ import type { ToolSession } from "../sdk";
 import type { SessionEntry } from "../session/session-entries";
 
 import { normalizePathLikeInput, resolveToCwd } from "./path-utils";
+import { extractArtifactPaths, todoDoneGateDecision } from "./todo-gate";
 
 /** Whether an unknown value is a persisted todo phase. */
 export function isTodoPhase(value: unknown): value is TodoPhase {
@@ -749,6 +750,18 @@ export class TodoTool implements AgentTool<typeof todoSchema, TodoToolDetails> {
 		const op = entry.op;
 		// Pure-view calls are reads: no normalization, no state write.
 		const readOnly = op === "view";
+		// The completion gate: a task may only be marked done when the
+		// artifacts it names are proven to exist in git. The gate is asked
+		// before the transition so an unproven task is refused rather than
+		// completed and then audited by hand.
+		const gateFailure = readOnly ? undefined : await this.#checkCompletionGate(entry);
+		if (gateFailure) {
+			return {
+				content: [{ type: "text", text: gateFailure }],
+				details: { op, phases: previousPhases, storage },
+				isError: true,
+			};
+		}
 		const { phases: updated, errors } = readOnly
 			? { phases: previousPhases, errors: [] as string[] }
 			: applyParams(clonePhases(previousPhases), entry);
@@ -761,11 +774,51 @@ export class TodoTool implements AgentTool<typeof todoSchema, TodoToolDetails> {
 		if (!readOnly && !failed) this.session.setTodoPhases?.(updated);
 		const details: TodoToolDetails = { op, phases: effective, storage };
 		if (completedTasks.length > 0) details.completedTasks = completedTasks;
-
 		return {
 			content: [{ type: "text", text: formatSummary(effective, errors, readOnly) }],
 			details,
 			isError: errors.length > 0 ? true : undefined,
 		};
+	}
+
+	/**
+	 * Runs the completion gate for a `done` op.
+	 *
+	 * Returns the refusal text when the transition must not proceed, and
+	 * undefined when it may. Only `done` is gated: every other op changes the
+	 * *plan*, not the *claim that work is finished*.
+	 */
+	async #checkCompletionGate(entry: TodoOpEntryValue): Promise<string | undefined> {
+		if (entry.op !== "done") return undefined;
+		const phases = this.session.getTodoPhases?.() ?? [];
+		const targets = entry.task
+			? phases.flatMap(phase => phase.tasks.filter(task => task.content === entry.task))
+			: phases.flatMap(phase => phase.tasks);
+		if (targets.length === 0) return undefined;
+
+		const artifacts = targets.flatMap(task => extractArtifactPaths(task.content));
+		if (artifacts.length === 0) return undefined;
+
+		const git = this.session.getGitProofProvider?.();
+		if (!git) return undefined;
+		try {
+			await git.prepare?.();
+		} catch {
+			// The git state could not be read: the gate cannot prove anything,
+			// so it does not invent a refusal either. An unavailable proof is not
+			// evidence of uncommitted work.
+			return undefined;
+		}
+
+		const untracked = git.untrackedPaths();
+		const tracked = artifacts.every(artifact => !untracked.includes(artifact) && git.isTracked(artifact));
+		const decision = todoDoneGateDecision({
+			task: targets.map(task => task.content).join("; "),
+			artifacts,
+			tracked,
+			untrackedPaths: untracked,
+		});
+		if (decision.allowed) return undefined;
+		return `${decision.reason}\n${decision.hint}`;
 	}
 }
