@@ -27,7 +27,7 @@ import {
 	type ObligationSnapshotEntry,
 	type ObligationViolation,
 } from "@oh-my-pi/pi-agent-core/obligation-ledger";
-import { buildIntentFrame, type IntentFrame } from "@oh-my-pi/pi-agent-core/intent-frame";
+import { buildIntentFrame, buildIntentFrameAsync, type IntentFrame } from "@oh-my-pi/pi-agent-core/intent-frame";
 import {
 	type BudgetAction,
 	type BudgetGovernor,
@@ -60,6 +60,13 @@ export interface EnforcementRuntime {
 	/** Builds the intent frame for a human turn. */
 	observeTurn(text: string): IntentFrame | undefined;
 	/**
+	 * Builds the intent frame for a human turn, resolving symbols through the
+	 * language server when one is configured. Falls back to the synchronous
+	 * path when no async resolver is present, so the frame is the same either
+	 * way.
+	 */
+	observeTurnAsync(text: string): Promise<IntentFrame | undefined>;
+	/**
 	 * Compiles a human correction into an obligation and records it.
 	 *
 	 * Separate from {@link observeTurn} because a turn and a correction are
@@ -88,6 +95,16 @@ export interface EnforcementRuntime {
 export interface EnforcementRuntimeOptions {
 	/** Resolves an identifier to a symbol (LSP in production). */
 	readonly resolveSymbol?: (identifier: string) => { name: string; kind: string; uri: string } | undefined;
+	/**
+	 * Asynchronous symbol resolution — the language server.
+	 *
+	 * When present, {@link EnforcementRuntime.observeTurnAsync} resolves the
+	 * identifiers the human named into real definitions instead of guessed
+	 * names.
+	 */
+	readonly resolveSymbolAsync?: (
+		identifier: string,
+	) => Promise<{ name: string; kind: string; uri: string } | undefined>;
 	/** Novelty floor for the budget governor. */
 	readonly noveltyFloor?: number;
 	/** Sliding window size for the novelty rate. */
@@ -149,6 +166,15 @@ export function createEnforcementRuntime(options: EnforcementRuntimeOptions = {}
 		observeTurn(text: string): IntentFrame | undefined {
 			if (!text || text.trim().length === 0) return undefined;
 			const frame = buildIntentFrame(text, { resolveSymbol: options.resolveSymbol });
+			frames.push(frame);
+			return frame;
+		},
+
+		async observeTurnAsync(text: string): Promise<IntentFrame | undefined> {
+			if (!text || text.trim().length === 0) return undefined;
+			const frame = options.resolveSymbolAsync
+				? await buildIntentFrameAsync(text, { resolveSymbolAsync: options.resolveSymbolAsync })
+				: buildIntentFrame(text, { resolveSymbol: options.resolveSymbol });
 			frames.push(frame);
 			return frame;
 		},

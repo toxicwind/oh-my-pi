@@ -537,6 +537,7 @@ import { EAGER_TODO_PRELUDE_MESSAGE_TYPE, TodoTracker, type TodoTrackerHost } fr
 import { TtsrCoordinator, type TtsrCoordinatorHost } from "./ttsr-coordinator";
 import { createEnforcementRuntime, type EnforcementRuntime } from "./enforcement-runtime";
 import { createObligationLedgerMirror } from "./obligation-ledger-mirror";
+import { createLiveSymbolResolver } from "../lsp/live-symbol-resolver";
 import type { ObligationSnapshotEntry } from "@oh-my-pi/pi-agent-core/obligation-ledger";
 
 import { cfgAdvisorEnabled, cfgAdvisorMaxNotesPerUpdate } from "../advisor/settings";
@@ -2284,8 +2285,15 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 		// mid-compaction still leaves a readable plan on disk.
 		const sessionFilePath = this.sessionManager.getSessionFile();
 		const ledgerDir = sessionFilePath ? sessionFilePath.replace(/\.jsonl?$/, "").concat(".obligations") : undefined;
+		// The language server is the only component that knows whether an
+		// identifier the human typed is a real symbol.
+		let liveResolver: ReturnType<typeof createLiveSymbolResolver> | undefined;
 		this.#enforcement = createEnforcementRuntime({
 			mirror: ledgerDir ? createObligationLedgerMirror(ledgerDir) : undefined,
+			resolveSymbolAsync: async identifier => {
+				liveResolver ??= createLiveSymbolResolver({ cwd: this.sessionManager.getCwd() });
+				return liveResolver.resolve(identifier);
+			},
 		});
 		this.#enforcement.rehydrate({
 			obligations: this.sessionManager
@@ -8616,7 +8624,10 @@ export class AgentSession implements SettingsScope, AgentViewSession {
 		// correction here becomes a persisted obligation; every turn becomes an
 		// intent frame so the record of "what was asked" is machine-readable.
 		if (!(options?.synthetic ?? false)) {
-			this.#enforcement.observeTurn(expandedText);
+			// The async path resolves the identifiers the human named against
+			// the language server, so the frame records real definitions rather
+			// than guessed names.
+			void this.#enforcement.observeTurnAsync(expandedText);
 			const correction = this.#enforcement.observeCorrection(expandedText);
 			if (correction) {
 				this.sessionManager.appendCustomEntry(CORRECTION_ENTRY_TYPE, {

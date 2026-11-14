@@ -494,3 +494,44 @@ export function methodProhibitionSubjects(frame: IntentFrame): string[] {
 export function isTrackedMethodSubject(subject: string): boolean {
 	return METHOD_SUBJECTS.includes(subject.toLowerCase());
 }
+
+/**
+ * Builds the intent frame with symbols resolved through an asynchronous
+ * resolver — the language server.
+ *
+ * The language server is a request, not a map lookup, so the resolution
+ * happens first and its answers are then handed to the synchronous builder.
+ * The two paths produce identical frames for identical answers, so a caller
+ * can switch between them without changing what the frame means.
+ */
+export async function buildIntentFrameAsync(
+	raw: string,
+	options: IntentFrameOptions & {
+		readonly resolveSymbolAsync?: (identifier: string) => Promise<ResolvedSymbolInfo | undefined>;
+	} = {},
+): Promise<IntentFrame> {
+	const { resolveSymbolAsync, ...rest } = options;
+	if (!resolveSymbolAsync) return buildIntentFrame(raw, rest);
+
+	// The candidates are the same ones the synchronous builder would propose;
+	// resolving them first and passing the answers in keeps one definition of
+	// "a candidate identifier".
+	const candidates = new Set<string>();
+	for (const sentence of sentences(raw ?? "")) {
+		for (const candidate of candidateIdentifiers(sentence)) {
+			const base = baseIdentifier(candidate);
+			if (base.length >= 3) candidates.add(base);
+		}
+	}
+
+	const resolved = new Map<string, ResolvedSymbolInfo>();
+	for (const candidate of candidates) {
+		const info = await resolveSymbolAsync(candidate);
+		if (info) resolved.set(candidate, info);
+	}
+
+	return buildIntentFrame(raw, {
+		...rest,
+		resolveSymbol: (identifier: string) => resolved.get(identifier),
+	});
+}
