@@ -119,3 +119,16 @@ build --remote_upload_local_results=true
 build --remote_local_fallback
 build --remote_retries=2
 build --remote_timeout=60s
+
+# --- BuildBuddy (emergent 2026-11) -----------------------------------------
+# Opt-in: `bazel build --config=buildbuddy ...` to use the Pens BuildBuddy /
+# REAPI control plane (:25218) for BES + remote cache. Key via
+# .bazelrc.user (--remote_header=x-buildbuddy-api-key=...), never committed.
+build:buildbuddy --bes_backend=grpc://127.0.0.1:25218
+build:buildbuddy --bes_results_url=http://127.0.0.1:25218/invocation/
+common:buildbuddy --remote_cache=grpc://127.0.0.1:25218
+build:buildbuddy --remote_cache_compression
+build:buildbuddy --remote_downloader=grpc://127.0.0.1:25218
+build:buildbuddy --remote_timeout=3600
+build:buildbuddy --remote_upload_local_results=true
+build:buildbuddy --remote_local_fallback

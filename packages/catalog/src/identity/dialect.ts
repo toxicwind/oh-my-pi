@@ -1,4 +1,5 @@
 import { classifyModel } from "../compat/taxonomy";
+import { type Api } from "../../types";
 
 export type Dialect =
 	| "glm"
@@ -15,7 +16,7 @@ export type Dialect =
 
 export const FALLBACK_DIALECT: Dialect = "xml";
 
-export function preferredDialect(modelId: string): Dialect {
+export function preferredDialect(modelId: string, providerApi?: Api): Dialect {
 	switch (classifyModel("", modelId, { lenient: true }).class) {
 		case "anthropic":
 			return "anthropic";
@@ -37,6 +38,8 @@ export function preferredDialect(modelId: string): Dialect {
 		case "gpt-oss":
 			return "harmony";
 		default:
+			if (providerApi === "openai-completions") return "harmony";
+			if (providerApi === "anthropic-messages") return "anthropic";
 			return FALLBACK_DIALECT;
 	}
 }

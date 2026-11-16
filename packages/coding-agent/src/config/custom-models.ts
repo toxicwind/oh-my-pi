@@ -179,9 +179,25 @@ export function normalizeSuppressedSelector(
 }
 
 /**
+ * Match an override-key pattern against a model id. Keys without `*` are
+ * exact model ids; keys containing `*` are glob patterns where `*` matches
+ * any run of characters across the whole id (`"*"` alone matches every
+ * model). The regex is anchored so a pattern never matches a bare substring.
+ */
+export function overridePatternMatches(pattern: string, modelId: string): boolean {
+	if (!pattern.includes("*")) return pattern === modelId;
+	const expression = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\\\*/g, ".*");
+	return new RegExp(`^${expression}$`).test(modelId);
+}
+
+/**
  * Look up a model's override, falling back to entries keyed by retired
  * effort-tier variant ids (models.yml authored before collapsing). A raw key
- * only re-binds when no live model holds that id.
+ * only re-binds when no live model holds that id. Keys containing `*` are
+ * treated as glob patterns, so a `"*"` override applies to every model of
+ * the provider and a pattern like `"gpt-*"` matches any id it covers.
+ * Specificity wins: an exact id is checked first, then variant aliases,
+ * then wildcard patterns in map order.
  */
 export function resolveModelOverrideWithAliases(
 	overrides: Map<string, ModelOverride>,
@@ -201,6 +217,15 @@ export function resolveModelOverrideWithAliases(
 			});
 			return remapped;
 		}
+	}
+	for (const [pattern, override] of overrides) {
+		if (!overridePatternMatches(pattern, model.id)) continue;
+		logger.debug("model override applied through wildcard key", {
+			provider: model.provider,
+			pattern,
+			id: model.id,
+		});
+		return override;
 	}
 	return undefined;
 }
