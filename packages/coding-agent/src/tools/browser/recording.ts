@@ -242,9 +242,9 @@ export function installCursorOverlay(): void {
 		ripple.addEventListener("animationend", () => ripple.remove(), { once: true });
 	};
 	const mount = (): void => {
-		if (document.getElementById("__omp_recording_cursor__")) return;
+		if (document.getElementById("__tau_recording_cursor__")) return;
 		root = document.createElement("div");
-		root.id = "__omp_recording_cursor__";
+		root.id = "__tau_recording_cursor__";
 		root.setAttribute("aria-label", "OMP recording cursor overlay");
 		root.setAttribute("aria-hidden", "true");
 		root.setAttribute("inert", "");
@@ -267,7 +267,7 @@ export function installCursorOverlay(): void {
 		state.removeEventListener("mousemove", onMove, true);
 		state.removeEventListener("mousedown", onDown, true);
 		root?.remove();
-		document.getElementById("__omp_recording_cursor__")?.remove();
+		document.getElementById("__tau_recording_cursor__")?.remove();
 		delete state.__ompRecordingCursorCleanup;
 	};
 }
@@ -276,7 +276,7 @@ export function installCursorOverlay(): void {
 export function removeCursorOverlay(): void {
 	const state = globalThis as unknown as CursorPageGlobal;
 	state.__ompRecordingCursorCleanup?.();
-	state.document.getElementById("__omp_recording_cursor__")?.remove();
+	state.document.getElementById("__tau_recording_cursor__")?.remove();
 }
 
 class CdpRecordingSource implements RecordingFrameSource {

@@ -3,7 +3,7 @@
  *
  * An interactive launch hands its update check to {@link runAutoUpdate}. When
  * the check finds a newer release, the launch spawns a detached worker
- * (`__omp_worker_auto_update`) that installs it exactly as `omp update` would,
+ * (`__tau_worker_auto_update`) that installs it exactly as `omp update` would,
  * through whatever owns the install (build-service binary, bun, npm, Homebrew,
  * mise), while the launch shows the progress after the welcome banner's version
  * label. The worker outlives the session, so quitting mid-download never
@@ -337,7 +337,7 @@ async function settle(outcome: UpdateOutcome): Promise<StateUpdate> {
 }
 
 /**
- * Worker entry (`__omp_worker_auto_update`): install the newest release the
+ * Worker entry (`__tau_worker_auto_update`): install the newest release the
  * way `omp update` would, mirroring progress into the status file, and record
  * the outcome. Exits at once when another worker holds the status lock.
  */

@@ -304,14 +304,14 @@ describe.skipIf(!CHROMIUM_AVAILABLE)("browser open options", () => {
 			action: "open",
 			name,
 			url: "data:text/html,<title>first</title>",
-			init_scripts: ["globalThis.__omp_init = (globalThis.__omp_init || 0) + 1"],
+			init_scripts: ["globalThis.__tau_init = (globalThis.__tau_init || 0) + 1"],
 		});
 		expect(
 			returnedValue(
 				await invoke({
 					action: "run",
 					name,
-					code: "return await tab.evaluate(() => globalThis.__omp_init);",
+					code: "return await tab.evaluate(() => globalThis.__tau_init);",
 				}),
 			),
 		).toBe(1);
@@ -320,7 +320,7 @@ describe.skipIf(!CHROMIUM_AVAILABLE)("browser open options", () => {
 				await invoke({
 					action: "run",
 					name,
-					code: "await tab.goto('data:text/html,<title>second</title>'); return await tab.evaluate(() => globalThis.__omp_init);",
+					code: "await tab.goto('data:text/html,<title>second</title>'); return await tab.evaluate(() => globalThis.__tau_init);",
 				}),
 			),
 		).toBe(1);
@@ -328,7 +328,7 @@ describe.skipIf(!CHROMIUM_AVAILABLE)("browser open options", () => {
 			await invoke({
 				action: "call",
 				name,
-				chain: [{ method: "addInitScript", args: ["globalThis.__omp_runtime = 42"] }],
+				chain: [{ method: "addInitScript", args: ["globalThis.__tau_runtime = 42"] }],
 			}),
 		) as { id: string };
 		expect(typeof added.id).toBe("string");
@@ -337,7 +337,7 @@ describe.skipIf(!CHROMIUM_AVAILABLE)("browser open options", () => {
 				await invoke({
 					action: "run",
 					name,
-					code: "await tab.goto('data:text/html,<title>third</title>'); return await tab.evaluate(() => globalThis.__omp_runtime);",
+					code: "await tab.goto('data:text/html,<title>third</title>'); return await tab.evaluate(() => globalThis.__tau_runtime);",
 				}),
 			),
 		).toBe(42);
@@ -345,7 +345,7 @@ describe.skipIf(!CHROMIUM_AVAILABLE)("browser open options", () => {
 			returnedValue(await invoke({ action: "call", name, chain: [{ method: "initScripts", args: [] }] })),
 		).toEqual(
 			expect.arrayContaining([
-				expect.objectContaining({ id: added.id, source: expect.stringContaining("__omp_runtime") }),
+				expect.objectContaining({ id: added.id, source: expect.stringContaining("__tau_runtime") }),
 			]),
 		);
 		await invoke({
@@ -358,7 +358,7 @@ describe.skipIf(!CHROMIUM_AVAILABLE)("browser open options", () => {
 				await invoke({
 					action: "run",
 					name,
-					code: "await tab.goto('data:text/html,<title>fourth</title>'); return await tab.evaluate(() => globalThis.__omp_runtime);",
+					code: "await tab.goto('data:text/html,<title>fourth</title>'); return await tab.evaluate(() => globalThis.__tau_runtime);",
 				}),
 			),
 		).toBeUndefined();

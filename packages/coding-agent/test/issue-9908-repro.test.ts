@@ -1,7 +1,7 @@
 /**
  * Regression for https://github.com/can1357/oh-my-pi/issues/9908
  *
- * Every omp process used to spawn its own `__omp_worker_mnemopi_embed` child
+ * Every omp process used to spawn its own `__tau_worker_mnemopi_embed` child
  * and keep the embedding model resident for the whole process lifetime
  * (0.8–1.6 GB per session). Embeddings now go through one machine-shared
  * server per (model, cache dir) that exits once idle. This test spawns the

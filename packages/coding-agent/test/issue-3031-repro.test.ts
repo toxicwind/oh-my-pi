@@ -9,7 +9,7 @@
  *   - NPM install: NAPI finalizer segfault at process teardown.
  *
  * The fix relocates the embeddings stack into a Bun.spawn child process
- * (`__omp_worker_mnemopi_embed`) owned by the machine-shared embedding server;
+ * (`__tau_worker_mnemopi_embed`) owned by the machine-shared embedding server;
  * the agent hands `mnemopi.setLocalModelInitializer` a wrapper that round-trips
  * through that server, and the server `SIGKILL`s the child so the destructor
  * never runs in any address space. These tests pin the child's contract so a

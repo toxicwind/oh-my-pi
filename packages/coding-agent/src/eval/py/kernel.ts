@@ -56,7 +56,7 @@ const INTERRUPT_ESCALATION_MS = 5_000;
 export const PYTHON_KERNEL_CANCEL_BUDGET_MS = INTERRUPT_ESCALATION_MS + 3 * SHUTDOWN_GRACE_MS;
 
 const PYTHON_RESERVED_PRELUDE_EXPORTS: Record<string, true> = {
-	__omp_tools__: true,
+	__tau_tools__: true,
 	_omp_prelude: true,
 	AgentHandle: true,
 	CompletionHandle: true,
@@ -294,8 +294,8 @@ export class PythonKernel extends BaseKernel<PythonKernelExecuteOptions> {
 		const source: string[] = [];
 		if (removedExports.length > 0) {
 			source.push(
-				`for __omp_export in ${JSON.stringify(removedExports)}:\n    globals().pop(__omp_export, None)`,
-				'globals().pop("__omp_export", None)',
+				`for __tau_export in ${JSON.stringify(removedExports)}:\n    globals().pop(__tau_export, None)`,
+				'globals().pop("__tau_export", None)',
 			);
 		}
 		for (const prelude of changed) source.push(prelude.source);
@@ -430,10 +430,10 @@ function buildInitScript(cwd: string, env?: Record<string, string | undefined>):
 	const envPayload = Object.fromEntries(envEntries);
 	return [
 		"import os, sys",
-		`__omp_cwd = ${JSON.stringify(cwd)}`,
-		"os.chdir(__omp_cwd)",
-		`__omp_env = ${JSON.stringify(envPayload)}`,
-		"for __omp_key, __omp_val in __omp_env.items():\n    os.environ[__omp_key] = __omp_val",
-		"if __omp_cwd not in sys.path:\n    sys.path.insert(0, __omp_cwd)",
+		`__tau_cwd = ${JSON.stringify(cwd)}`,
+		"os.chdir(__tau_cwd)",
+		`__tau_env = ${JSON.stringify(envPayload)}`,
+		"for __tau_key, __tau_val in __tau_env.items():\n    os.environ[__tau_key] = __tau_val",
+		"if __tau_cwd not in sys.path:\n    sys.path.insert(0, __tau_cwd)",
 	].join("\n");
 }

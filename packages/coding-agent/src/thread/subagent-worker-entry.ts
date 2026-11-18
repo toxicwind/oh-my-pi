@@ -2,7 +2,7 @@
  * Subagent host worker bootstrap.
  *
  * Loaded inside a Bun worker spawned by `SubagentWorker` (`./subagent-worker`),
- * either through the CLI host selector (`__omp_worker_subagent`, which installs
+ * either through the CLI host selector (`__tau_worker_subagent`, which installs
  * a buffering inbox before importing this module) or directly as a module URL
  * (tests, SDK embedding). The first message is the raw
  * {@link SubagentWorkerInit}; everything after it is an RPC frame.

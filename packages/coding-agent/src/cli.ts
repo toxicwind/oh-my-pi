@@ -192,14 +192,14 @@ async function runSmokeTest(): Promise<void> {
 	process.stdout.write("smoke-test: ok\n");
 }
 
-const TINY_WORKER_ARG = "__omp_worker_tiny_inference";
-const STATS_SYNC_WORKER_ARG = "__omp_worker_stats_sync";
-const TAB_WORKER_ARG = "__omp_worker_tab";
-const JS_EVAL_WORKER_ARG = "__omp_worker_js_eval";
-const JS_EVAL_PROCESS_ARG = "__omp_worker_js_eval_process";
-const STT_WORKER_ARG = "__omp_worker_stt";
-const TTS_WORKER_ARG = "__omp_worker_tts";
-const MNEMOPI_EMBED_WORKER_ARG = "__omp_worker_mnemopi_embed";
+const TINY_WORKER_ARG = "__tau_worker_tiny_inference";
+const STATS_SYNC_WORKER_ARG = "__tau_worker_stats_sync";
+const TAB_WORKER_ARG = "__tau_worker_tab";
+const JS_EVAL_WORKER_ARG = "__tau_worker_js_eval";
+const JS_EVAL_PROCESS_ARG = "__tau_worker_js_eval_process";
+const STT_WORKER_ARG = "__tau_worker_stt";
+const TTS_WORKER_ARG = "__tau_worker_tts";
+const MNEMOPI_EMBED_WORKER_ARG = "__tau_worker_mnemopi_embed";
 
 async function runWorkerEntrypoint(arg: string | undefined): Promise<boolean> {
 	if (arg === TINY_WORKER_ARG) {

@@ -22,7 +22,7 @@ describe("prepared extension rebinding", () => {
 		const childDirectory = path.join(directory, "child");
 		await Promise.all([fs.mkdir(parentDirectory), fs.mkdir(childDirectory)]);
 		const extensionPath = path.join(directory, "counter.ts");
-		const counterKey = `__omp_prepared_extension_${crypto.randomUUID().replaceAll("-", "")}`;
+		const counterKey = `__tau_prepared_extension_${crypto.randomUUID().replaceAll("-", "")}`;
 		const bindingsKey = `${counterKey}_bindings`;
 		await Bun.write(
 			extensionPath,

@@ -76,17 +76,17 @@ function generateSnapshotScript(shell: string, snapshotPath: string, rcFile: str
 	const printFunction = isZsh ? "typeset -f" : "declare -f";
 	const functionExtractor = `# Force autoload all functions first
 ${printFunction} > /dev/null 2>&1
-__omp_all=$(${listFunctionNames} 2>/dev/null | command sort -u)
-__omp_next=$(printf '%s\\n' "$__omp_all" | grep -vE '^(_|__)' | grep -vE '${commonFunctionRegex}')
-__omp_kept=$(mktemp)
-while [ -n "$__omp_next" ]; do
-   printf '%s\\n' "$__omp_next" >> "$__omp_kept"
-   __omp_next=$(printf '%s\\n' "$__omp_next" | while IFS= read -r __omp_f; do ${printFunction} "$__omp_f" 2>/dev/null; done \\
-      | grep -oE '[A-Za-z_][A-Za-z0-9_.-]*' | command sort -u | grep -xF -f <(printf '%s\\n' "$__omp_all") \\
-      | grep -vE '${commonFunctionRegex}' | grep -vxF -f "$__omp_kept")
+__tau_all=$(${listFunctionNames} 2>/dev/null | command sort -u)
+__tau_next=$(printf '%s\\n' "$__tau_all" | grep -vE '^(_|__)' | grep -vE '${commonFunctionRegex}')
+__tau_kept=$(mktemp)
+while [ -n "$__tau_next" ]; do
+   printf '%s\\n' "$__tau_next" >> "$__tau_kept"
+   __tau_next=$(printf '%s\\n' "$__tau_next" | while IFS= read -r __tau_f; do ${printFunction} "$__tau_f" 2>/dev/null; done \\
+      | grep -oE '[A-Za-z_][A-Za-z0-9_.-]*' | command sort -u | grep -xF -f <(printf '%s\\n' "$__tau_all") \\
+      | grep -vE '${commonFunctionRegex}' | grep -vxF -f "$__tau_kept")
 done
-while IFS= read -r __omp_f; do ${printFunction} "$__omp_f" 2>/dev/null; done < "$__omp_kept"
-rm -f "$__omp_kept"`;
+while IFS= read -r __tau_f; do ${printFunction} "$__tau_f" 2>/dev/null; done < "$__tau_kept"
+rm -f "$__tau_kept"`;
 
 	// Shell options extraction
 	const optionsScript = isZsh
@@ -127,11 +127,11 @@ echo "unalias -a 2>/dev/null || true" >> "$SNAPSHOT_FILE"
 
 # Capture function definitions into a variable so we can both persist them
 # and scan their bodies for env-var references (issue #3470).
-__omp_funcs=$(
+__tau_funcs=$(
 ${functionExtractor}
 )
 echo "# Functions" >> "$SNAPSHOT_FILE"
-printf '%s\\n' "$__omp_funcs" >> "$SNAPSHOT_FILE"
+printf '%s\\n' "$__tau_funcs" >> "$SNAPSHOT_FILE"
 
 # Re-export uppercase identifiers referenced by snapshotted functions whose
 # value is set in the rc-sourced shell. Without this, activation idioms like
@@ -140,9 +140,9 @@ printf '%s\\n' "$__omp_funcs" >> "$SNAPSHOT_FILE"
 # block works for both bash and zsh.
 echo "# Captured function environment" >> "$SNAPSHOT_FILE"
 ${fnEnvHelper}
-printf '%s\\n' "$__omp_funcs" | __omp_emit_referenced_exports >> "$SNAPSHOT_FILE"
-unset -f __omp_sq_quote __omp_emit_export_for __omp_emit_referenced_exports 2>/dev/null
-unset __omp_funcs __omp_qbuf __omp_qout __omp_sq __omp_xv __omp_name 2>/dev/null
+printf '%s\\n' "$__tau_funcs" | __tau_emit_referenced_exports >> "$SNAPSHOT_FILE"
+unset -f __tau_sq_quote __tau_emit_export_for __tau_emit_referenced_exports 2>/dev/null
+unset __tau_funcs __tau_qbuf __tau_qout __tau_sq __tau_xv __tau_name 2>/dev/null
 
 ${optionsScript}
 

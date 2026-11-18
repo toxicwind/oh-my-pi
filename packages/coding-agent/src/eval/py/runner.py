@@ -253,7 +253,7 @@ _SHADOW_UNSUPPORTED = object()
 # bridge. A retained non-JSON-safe user `tool` binding is omitted from the
 # shadow snapshot exactly like the genuine bridge, so snapshot absence alone
 # cannot tell them apart (see `_shadow_tool_available`).
-_TOOL_BRIDGE_MARKER = "__omp_tool_bridge__"
+_TOOL_BRIDGE_MARKER = "__tau_tool_bridge__"
 
 # Runner-owned reference to the genuine prelude tool bridge, captured on first
 # sighting: kernel init executes the prelude before user cells, so the first
@@ -617,7 +617,7 @@ def _emit_shadow_plan(req: dict) -> None:
         )
         return
     # Mirror the `_compile_source` whole-cell instrumentation skip: when the
-    # cell binds `__omp_with_call_site__` anywhere, authoritative execution
+    # cell binds `__tau_with_call_site__` anywhere, authoritative execution
     # runs zero instrumented calls, so the planner must admit zero operations
     # (per-call scoping is undecidable across call order; fail closed).
     if _cell_binds_call_site_helper(module):
@@ -1020,12 +1020,12 @@ def transform_cell(source: str) -> str:
 
     Rules
     -----
-    * ``%name args``              -> ``__omp_magic("name", "args")``
-    * ``%load path``              -> ``await __omp_magic_async("load", "path")``
-    * ``var = %name args``        -> ``var = __omp_magic("name", "args")``
-    * ``!cmd``                    -> ``__omp_shell("cmd")``
-    * ``var = !cmd``              -> ``var = __omp_shell("cmd")``
-    * ``%%name args\\n<body>``    -> ``__omp_magic_cell("name", "args", "<body>")``
+    * ``%name args``              -> ``__tau_magic("name", "args")``
+    * ``%load path``              -> ``await __tau_magic_async("load", "path")``
+    * ``var = %name args``        -> ``var = __tau_magic("name", "args")``
+    * ``!cmd``                    -> ``__tau_shell("cmd")``
+    * ``var = !cmd``              -> ``var = __tau_shell("cmd")``
+    * ``%%name args\\n<body>``    -> ``__tau_magic_cell("name", "args", "<body>")``
       (cell magic must be the first non-whitespace token of a top-level line and
       consumes the remainder of the cell)
 
@@ -1057,7 +1057,7 @@ def transform_cell(source: str) -> str:
             body_lines = lines[i + 1 :]
             body = "\n".join(body_lines)
             out.append(
-                f"{indent}__omp_magic_cell({_quote_arg(name)}, {_quote_arg(args)}, {_quote_arg(body)})"
+                f"{indent}__tau_magic_cell({_quote_arg(name)}, {_quote_arg(args)}, {_quote_arg(body)})"
             )
             return "\n".join(out)
 
@@ -1068,7 +1068,7 @@ def transform_cell(source: str) -> str:
             indent = folded[: len(folded) - len(stripped_folded)]
             head, _ = _split_magic_head(stripped_folded[1:])
             name, args = head
-            call = "__omp_magic_async" if name == "load" else "__omp_magic"
+            call = "__tau_magic_async" if name == "load" else "__tau_magic"
             prefix = "await " if name == "load" else ""
             out.append(f"{indent}{prefix}{call}({_quote_arg(name)}, {_quote_arg(args)})")
             i += consumed
@@ -1079,7 +1079,7 @@ def transform_cell(source: str) -> str:
             stripped_folded = folded.lstrip()
             indent = folded[: len(folded) - len(stripped_folded)]
             cmd = stripped_folded[1:].strip()
-            out.append(f"{indent}__omp_shell({_quote_arg(cmd)})")
+            out.append(f"{indent}__tau_shell({_quote_arg(cmd)})")
             i += consumed
             continue
 
@@ -1090,14 +1090,14 @@ def transform_cell(source: str) -> str:
             if rhs.startswith("!"):
                 cmd = rhs[1:].strip()
                 out.append(
-                    f"{m.group('indent')}{m.group('lhs').rstrip()} = __omp_shell({_quote_arg(cmd)})"
+                    f"{m.group('indent')}{m.group('lhs').rstrip()} = __tau_shell({_quote_arg(cmd)})"
                 )
                 i += 1
                 continue
             if rhs.startswith("%") and not rhs.startswith("%%"):
                 head, _ = _split_magic_head(rhs[1:])
                 name, args = head
-                call = "__omp_magic_async" if name == "load" else "__omp_magic"
+                call = "__tau_magic_async" if name == "load" else "__tau_magic"
                 prefix = "await " if name == "load" else ""
                 out.append(
                     f"{m.group('indent')}{m.group('lhs').rstrip()} = {prefix}{call}({_quote_arg(name)}, {_quote_arg(args)})"
@@ -1769,19 +1769,19 @@ def _run_shell_body(body: str, *, shell_arg: str) -> int:
     return proc.returncode
 
 
-def __omp_magic(name: str, args: str) -> Any:
+def __tau_magic(name: str, args: str) -> Any:
     fn = _LINE_MAGICS.get(name)
     if fn is None:
         raise NameError(f"UsageError: Line magic function '%{name}' not found.")
     return fn(args)
 
 
-async def __omp_magic_async(name: str, args: str) -> Any:
-    result = __omp_magic(name, args)
+async def __tau_magic_async(name: str, args: str) -> Any:
+    result = __tau_magic(name, args)
     return await result if inspect.isawaitable(result) else result
 
 
-def __omp_magic_cell(name: str, args: str, body: str) -> Any:
+def __tau_magic_cell(name: str, args: str, body: str) -> Any:
     fn = _CELL_MAGICS.get(name)
     if fn is None:
         raise NameError(f"UsageError: Cell magic function '%%{name}' not found.")
@@ -1804,7 +1804,7 @@ class _ShellResult(list):
         return " ".join(self)
 
 
-def __omp_shell(cmd: str) -> _ShellResult:
+def __tau_shell(cmd: str) -> _ShellResult:
     # stdin=DEVNULL: see _run_shell_body.
     proc = subprocess.Popen(
         cmd,
@@ -2393,13 +2393,13 @@ os.environ.setdefault("MPLBACKEND", "Agg")
 
 
 def _install_builtins(ns: dict) -> None:
-    ns["__omp_emit_status"] = _emit_status
-    ns["__omp_emit_image"] = _emit_image_dict
-    ns["__omp_magic"] = __omp_magic
-    ns["__omp_magic_async"] = __omp_magic_async
-    ns["__omp_magic_cell"] = __omp_magic_cell
-    ns["__omp_shell"] = __omp_shell
-    ns["__omp_current_run_id__"] = lambda: _CURRENT_RID.get()
+    ns["__tau_emit_status"] = _emit_status
+    ns["__tau_emit_image"] = _emit_image_dict
+    ns["__tau_magic"] = __tau_magic
+    ns["__tau_magic_async"] = __tau_magic_async
+    ns["__tau_magic_cell"] = __tau_magic_cell
+    ns["__tau_shell"] = __tau_shell
+    ns["__tau_current_run_id__"] = lambda: _CURRENT_RID.get()
 
 
 _install_builtins(_STATE.user_ns)
@@ -2453,7 +2453,7 @@ async def _run_compiled_async(code, ns: dict, *, want_value: bool) -> Any:
 
 
 
-_CALL_SITE_HELPER_NAME = "__omp_with_call_site__"
+_CALL_SITE_HELPER_NAME = "__tau_with_call_site__"
 
 # Runner-owned reference to the genuine instrumentation helper. The helper is
 # defined by the eval prelude inside the user namespace, so the first callable
@@ -2465,7 +2465,7 @@ _TRUSTED_CALL_SITE_HELPERS: dict[str, Any] = {}
 def _restore_call_site_helper(ns: dict) -> None:
     """Reinstall the genuine helper after retained-cell pollution.
 
-    A previous cell can assign or delete `__omp_with_call_site__`; without
+    A previous cell can assign or delete `__tau_with_call_site__`; without
     this, the next rewritten `tool.read(...)` would resolve to
     user-controlled state and change ordinary eval behavior even with
     speculation disabled.
@@ -2847,7 +2847,7 @@ def _handle_tool_request(req: dict) -> None:
     status = "ok"
     _emit({"type": "started", "id": rid})
     try:
-        tools = _STATE.user_ns.get("__omp_tools__") or {}
+        tools = _STATE.user_ns.get("__tau_tools__") or {}
         op = req.get("op")
         if op == "describe":
             requested = req.get("names") or list(tools)
@@ -2894,11 +2894,11 @@ async def _handle_request_async(req: dict) -> None:
     token = _CURRENT_RID.set(rid)
     displayed_matplotlib_token = _CURRENT_DISPLAYED_MATPLOTLIB_FIGURE_IDS.set(set())
     _STATE.capture_rid = rid
-    reset_call_occurrences = _STATE.user_ns.get("__omp_reset_call_occurrences__")
+    reset_call_occurrences = _STATE.user_ns.get("__tau_reset_call_occurrences__")
     if callable(reset_call_occurrences):
         reset_call_occurrences()
     _STATE.namespace_revision += 1
-    _STATE.user_ns["__omp_run_id__"] = rid
+    _STATE.user_ns["__tau_run_id__"] = rid
     _STATE.cancel_requested = False
     _STATE.execution_count += 1
     execution_count = _STATE.execution_count

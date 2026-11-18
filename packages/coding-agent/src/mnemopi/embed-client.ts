@@ -62,7 +62,7 @@ interface KeyedWorker {
  * Hidden subcommand on the main CLI that boots the onnxruntime child of the
  * shared embedding server. Kept in sync with the dispatch in `cli.ts`.
  */
-export const MNEMOPI_EMBED_WORKER_ARG = "__omp_worker_mnemopi_embed";
+export const MNEMOPI_EMBED_WORKER_ARG = "__tau_worker_mnemopi_embed";
 
 /**
  * Spawn the onnxruntime embeddings child. Exported for tests and the smoke

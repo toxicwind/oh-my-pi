@@ -25,11 +25,11 @@ import { artifactReadBridge } from "../helpers/artifact-read-bridge";
  * order, the missing-id error contract, and schema-aware `wait()` parsing.
  *
  * The prelude source is executed verbatim in a throwaway VM context with only
- * the host bridge (`__omp_call_tool__`) stubbed — no worker, no kernel — so the
+ * the host bridge (`__tau_call_tool__`) stubbed — no worker, no kernel — so the
  * test runs against the real shipped helper, not a re-implementation.
  */
 function loadPrelude(callTool: (name: string, args: unknown) => Promise<unknown>): Record<string, unknown> {
-	const sandbox: Record<string, unknown> = { __omp_call_tool__: callTool };
+	const sandbox: Record<string, unknown> = { __tau_call_tool__: callTool };
 	vm.createContext(sandbox);
 	vm.runInContext(JAVASCRIPT_PRELUDE_SOURCE, sandbox);
 	return sandbox;
@@ -207,7 +207,7 @@ describe("eval js read() URI delegation", () => {
 			calls.push({ name, args });
 			return { text: "resource contents" };
 		});
-		sandbox.__omp_helpers__ = { hasRoot: () => false };
+		sandbox.__tau_helpers__ = { hasRoot: () => false };
 
 		const result = await vm.runInContext(`read("mcp://server/resource", { offset: 10, limit: 5 })`, sandbox);
 
@@ -230,7 +230,7 @@ describe("eval js read() URI delegation", () => {
 			calls.push({ name, args });
 			return readTool(args as { path: string });
 		});
-		sandbox.__omp_helpers__ = createHelpers({
+		sandbox.__tau_helpers__ = createHelpers({
 			cwd: () => process.cwd(),
 			env: new Map(),
 			localRoots: () => roots,
@@ -357,7 +357,7 @@ describe("eval js output() options (issue #17455)", () => {
 		const readTool = new ReadTool(session);
 		session.getToolByName = name => (name === "read" ? (readTool as unknown as AgentTool) : undefined);
 		const sandbox = loadPrelude((name, args) => callSessionTool(name, args, { session }));
-		sandbox.__omp_helpers__ = createHelpers({
+		sandbox.__tau_helpers__ = createHelpers({
 			cwd: () => tmp.path(),
 			env: new Map(),
 			localRoots: () => ({}),

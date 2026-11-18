@@ -345,8 +345,8 @@ describe("auth-gateway POST /v1/systemone", () => {
 		harness = await boot(() => Response.json(UPSTREAM_ANSWER));
 		expect(OPENROUTER_JEV.input).toContain("image");
 		const state = {
-			__omp_judgment_images: "caller-owned base key",
-			__omp_judgment_images_1: { retained: true },
+			__tau_judgment_images: "caller-owned base key",
+			__tau_judgment_images_1: { retained: true },
 			ticket: "payouts",
 			messages: [{ author: "customer", text: "My payout has been delayed." }],
 		};
@@ -377,13 +377,13 @@ describe("auth-gateway POST /v1/systemone", () => {
 		};
 		expect(upstreamBody).toEqual({
 			model: OPENROUTER_JEV.id,
-			state: { ...state, __omp_judgment_images_2: [imagePart] },
+			state: { ...state, __tau_judgment_images_2: [imagePart] },
 			questions,
 		});
 		expect(upstreamBody.state.ticket).toBe(state.ticket);
-		expect(upstreamBody.state.__omp_judgment_images).toBe(state.__omp_judgment_images);
-		expect(upstreamBody.state.__omp_judgment_images_1).toEqual(state.__omp_judgment_images_1);
-		const sentImages = upstreamBody.state.__omp_judgment_images_2 as (typeof imagePart)[];
+		expect(upstreamBody.state.__tau_judgment_images).toBe(state.__tau_judgment_images);
+		expect(upstreamBody.state.__tau_judgment_images_1).toEqual(state.__tau_judgment_images_1);
+		const sentImages = upstreamBody.state.__tau_judgment_images_2 as (typeof imagePart)[];
 		expect(Buffer.from(sentImages[0].image_url.url.slice("data:image/png;base64,".length), "base64")).toEqual(
 			Buffer.from(JEV_PNG, "base64"),
 		);

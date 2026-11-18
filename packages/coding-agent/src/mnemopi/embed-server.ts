@@ -2,11 +2,11 @@
  * Machine-shared mnemopi embedding server: one detached process per (model,
  * cache dir) that owns that pair's IPC endpoint, serves every omp process on
  * the machine, and exits once idle so the model's memory is returned (issue
- * #9908). Entered from `cli.ts` via the `__omp_worker_mnemopi_embed_server`
+ * #9908). Entered from `cli.ts` via the `__tau_worker_mnemopi_embed_server`
  * selector with the endpoint/model/tag env set by `embed-client.ts`.
  *
  * It never loads onnxruntime itself. Inference runs in a private
- * `__omp_worker_mnemopi_embed` child (issue #3031): onnxruntime-node's
+ * `__tau_worker_mnemopi_embed` child (issue #3031): onnxruntime-node's
  * `session.run` blocks the JS thread for a whole batch, and this loop must
  * keep answering pings, other clients, and its idle timer meanwhile. The child
  * is SIGKILLed when an embed wedges, on idle exit, and on shutdown, so the

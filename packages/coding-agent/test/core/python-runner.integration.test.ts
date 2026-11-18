@@ -516,7 +516,7 @@ describe.skipIf(!SHOULD_RUN)("python runner subprocess", () => {
 				// As a `%pip` inside a tool call runs: on another thread, which SIGINT never reaches.
 				[
 					"import contextvars, threading",
-					"worker = threading.Thread(target=contextvars.copy_context().run, args=(__omp_magic, 'pip', 'install six'))",
+					"worker = threading.Thread(target=contextvars.copy_context().run, args=(__tau_magic, 'pip', 'install six'))",
 					"worker.start()",
 					"worker.join()",
 				].join("\n"),

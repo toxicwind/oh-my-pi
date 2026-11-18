@@ -17,7 +17,7 @@ def _make_browser():
                 flags += "m"
             if value.flags & re.DOTALL:
                 flags += "s"
-            return {"__omp_re": {"source": value.pattern, "flags": flags}}
+            return {"__tau_re": {"source": value.pattern, "flags": flags}}
         return value
 
     def _arguments(args, kwargs):

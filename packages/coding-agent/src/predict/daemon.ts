@@ -1,6 +1,6 @@
 /**
  * Server half of the machine-global text-prediction daemon (worker selector
- * `__omp_worker_text_predict`, started through the `text-predict` global broker).
+ * `__tau_worker_text_predict`, started through the `text-predict` global broker).
  *
  * Lazily opens one `TextPredictor` per requested engine, keeps each learning
  * engine current with `history.db` (rows past a persisted row-id cursor, on

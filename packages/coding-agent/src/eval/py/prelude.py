@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 # OMP prelude helpers (loaded once into the runner namespace)
-if "__omp_prelude_loaded__" not in globals():
-    __omp_prelude_loaded__ = True
+if "__tau_prelude_loaded__" not in globals():
+    __tau_prelude_loaded__ = True
     from pathlib import Path
     import asyncio, collections.abc, contextvars, inspect, os, json, math, re, time, types, typing
     from urllib.parse import unquote
 
 
-    # __omp_emit_status / __omp_emit_image are injected by runner.py before the
+    # __tau_emit_status / __tau_emit_image are injected by runner.py before the
     # prelude executes; they write `status` / `image` frames for the current cell.
-    _emit_status = __omp_emit_status  # type: ignore[name-defined]
-    _emit_image = __omp_emit_image  # type: ignore[name-defined]
+    _emit_status = __tau_emit_status  # type: ignore[name-defined]
+    _emit_image = __tau_emit_image  # type: ignore[name-defined]
 
     def env(key: str | None = None, value: str | None = None):
         """Get/set environment variables."""
@@ -405,10 +405,10 @@ if "__omp_prelude_loaded__" not in globals():
     _OMP_CALL_IDENTITY = contextvars.ContextVar("omp_call_identity", default=None)
     _OMP_CALL_OCCURRENCES = contextvars.ContextVar("omp_call_occurrences", default=None)
 
-    def __omp_reset_call_occurrences__():
+    def __tau_reset_call_occurrences__():
         _OMP_CALL_OCCURRENCES.set(None)
 
-    async def __omp_with_call_site__(site_id: str, action, args):
+    async def __tau_with_call_site__(site_id: str, action, args):
         occurrences = dict(_OMP_CALL_OCCURRENCES.get() or {})
         occurrence = occurrences.get(site_id, 0)
         occurrences[site_id] = occurrence + 1
@@ -432,11 +432,11 @@ if "__omp_prelude_loaded__" not in globals():
     def _bridge_call(name: str, args: dict):
         """POST one request to the host tool bridge and return its `value`."""
         base, token, session = _tool_proxy_from_env()
-        _run_id_getter = globals().get("__omp_current_run_id__")
+        _run_id_getter = globals().get("__tau_current_run_id__")
         _run_id = (
             _run_id_getter()
             if callable(_run_id_getter)
-            else globals().get("__omp_run_id__")
+            else globals().get("__tau_run_id__")
         )
         payload = {
             "session": session,
@@ -636,8 +636,8 @@ if "__omp_prelude_loaded__" not in globals():
                 "parameters": self.parameters,
             }
 
-    __omp_tools__: dict[str, _EvalTool] = {}
-    globals()["__omp_tools__"] = __omp_tools__
+    __tau_tools__: dict[str, _EvalTool] = {}
+    globals()["__tau_tools__"] = __tau_tools__
     _TOOL_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
 
     class _ToolProxy:
@@ -650,7 +650,7 @@ if "__omp_prelude_loaded__" not in globals():
         # speculative reads only when the binding carries this marker.
         # (`__slots__` is empty, so this lives on the class, not the
         # instance; accidental user collision is out of threat model.)
-        __omp_tool_bridge__ = True
+        __tau_tool_bridge__ = True
 
         __slots__ = ()
 
@@ -672,7 +672,7 @@ if "__omp_prelude_loaded__" not in globals():
                 if isinstance(description, str) and description
                 else inspect.getdoc(fn) or f"Python tool {resolved_name}"
             )
-            __omp_tools__[resolved_name] = _EvalTool(
+            __tau_tools__[resolved_name] = _EvalTool(
                 resolved_name,
                 fn,
                 resolved_description,
@@ -686,10 +686,10 @@ if "__omp_prelude_loaded__" not in globals():
             return fn
 
         def defined(self) -> list[str]:
-            return list(__omp_tools__)
+            return list(__tau_tools__)
 
         def undefine(self, name) -> bool:
-            return __omp_tools__.pop(name, None) is not None
+            return __tau_tools__.pop(name, None) is not None
 
         def __getattr__(self, name: str) -> _ToolCallable:
             if name.startswith("_"):
@@ -1131,7 +1131,7 @@ if "__omp_prelude_loaded__" not in globals():
 
     def phase(title):
         """Record the current readable phase and emit a status ``phase`` event."""
-        globals()["__omp_current_phase__"] = str(title)
+        globals()["__tau_current_phase__"] = str(title)
         _emit_status("phase", title=str(title))
         return None
 
